@@ -1,0 +1,2005 @@
+/* eslint-disable no-case-declarations */
+
+/********** MODULES **********/
+const { decryptMedia, Client } = require('@open-wa/wa-automate')
+const { Configuration, OpenAIApi } = require('openai')
+const fs = require('fs-extra')
+const Nekos = require('nekos.life')
+const neko = new Nekos()
+const os = require('os')
+const sagiri = require('sagiri')
+const isPorn = require('is-porn')
+const config = require('../config.json')
+const saus = sagiri(config.nao)
+const tts = require('node-gtts')
+const ffmpeg = require('fluent-ffmpeg')
+const path = require('path')
+const ms = require('parse-ms')
+const toMs = require('ms')
+const canvas = require('canvacord')
+const mathjs = require('mathjs')
+const Filter = require('bad-words')
+const badwords = new Filter()
+const moment = require('moment-timezone')
+const translate = require('@vitalets/google-translate-api')
+moment.tz.setDefault('Asia/Jakarta').locale('id')
+const genshin = require('genshin')
+const google = require('google-it')
+const cron = require('node-cron')
+const ocrtess = require('node-tesseract-ocr')
+/********** END OF MODULES **********/
+
+/********** UTILS **********/
+const { msgFilter, color, processTime, isUrl, createSerial } = require('../tools')
+const { weeaboo, downloader } = require('../lib')
+const { uploadImages } = require('../tools/fetcher')
+// eslint-disable-next-line no-unused-vars
+const { eng, ind } = require('./text/lang/')
+const { daily, level, register, afk, reminder, premium, limit, quizizz } = require('../function')
+const cd = 4.32e+7
+const limitCount = 25
+const errorImg = 'https://i.ibb.co/jRCpLfn/user.png'
+let nsfwEnabled = false;
+/********** END OF UTILS **********/
+
+/********** DATABASES **********/
+const _antilink = JSON.parse(fs.readFileSync('./database/group/antilink.json'))
+const _antinsfw = JSON.parse(fs.readFileSync('./database/group/antinsfw.json'))
+const _leveling = JSON.parse(fs.readFileSync('./database/group/leveling.json'))
+const _welcome = JSON.parse(fs.readFileSync('./database/group/welcome.json'))
+const _autosticker = JSON.parse(fs.readFileSync('./database/group/autosticker.json'))
+const _badwords = JSON.parse(fs.readFileSync('./database/group/badwords.json'))
+const _ban = JSON.parse(fs.readFileSync('./database/bot/banned.json'))
+const _premium = JSON.parse(fs.readFileSync('./database/bot/premium.json'))
+const _mute = JSON.parse(fs.readFileSync('./database/bot/mute.json'))
+const _registered = JSON.parse(fs.readFileSync('./database/bot/registered.json'))
+const _level = JSON.parse(fs.readFileSync('./database/user/level.json'))
+let _limit = JSON.parse(fs.readFileSync('./database/user/limit.json'))
+const _afk = JSON.parse(fs.readFileSync('./database/user/afk.json'))
+const _reminder = JSON.parse(fs.readFileSync('./database/user/reminder.json'))
+const _daily = JSON.parse(fs.readFileSync('./database/user/daily.json'))
+const _setting = JSON.parse(fs.readFileSync('./database/bot/setting.json'))
+let { memberLimit, groupLimit } = _setting
+/********** END OF DATABASES **********/
+
+/********** MESSAGE HANDLER **********/
+// eslint-disable-next-line no-undef
+module.exports = msgHandler = async (ruriko = new Client(), message) => {
+    try {
+        const { type, id, from, t, sender, isGroupMsg, chat, caption, isMedia, mimetype, quotedMsg, quotedMsgObj, mentionedJidList } = message
+        let { body } = message
+        const { name, formattedTitle } = chat
+        let { pushname, verifiedName, formattedName } = sender
+        pushname = pushname || verifiedName || formattedName
+        const botNumber = await ruriko.getHostNumber() + '@c.us'
+        const blockNumber = await ruriko.getBlockedIds()
+        const ownerNumber = config.ownerBot
+        const authorWm = config.authorStick
+        const packWm = config.packStick
+        const prefix = config.prefix
+        const groupId = isGroupMsg ? chat.groupMetadata.id : ''
+        const groupAdmins = isGroupMsg ? await ruriko.getGroupAdmins(groupId) : ''
+        const time = moment(t * 1000).format('DD/MM/YY HH:mm:ss')
+
+        const chats = (type === 'chat') ? body : (type === 'image' || type === 'video') ? caption : ''
+        body = (type === 'chat' && body.startsWith(prefix)) ? body : (((type === 'image' || type === 'video') && caption) && caption.startsWith(prefix)) ? caption : ''
+        const command = body.slice(1).trim().split(/ +/).shift().toLowerCase()
+        const args = body.trim().split(/ +/).slice(1)
+        const q = args.join(' ')
+        const ar = args.map((v) => v.toLowerCase())
+        const url = args.length !== 0 ? args[0] : ''
+
+        /********** VALIDATOR **********/
+        const isCmd = body.startsWith(prefix)
+        const isBlocked = blockNumber.includes(sender.id)
+        const isOwner = sender.id === ownerNumber
+        const isBanned = _ban.includes(sender.id)
+        const isPremium = premium.checkPremiumUser(sender.id, _premium)
+        const isRegistered = register.checkRegisteredUser(sender.id, _registered)
+        const isGroupAdmins = isGroupMsg ? groupAdmins.includes(sender.id) : false
+        const isBotGroupAdmins = isGroupMsg ? groupAdmins.includes(botNumber) : false
+        const isWelcomeOn = isGroupMsg ? _welcome.includes(groupId) : false
+        const isDetectorOn = isGroupMsg ? _antilink.includes(groupId) : false
+        const isLevelingOn = isGroupMsg ? _leveling.includes(groupId) : false
+        const isAutoStickerOn = isGroupMsg ? _autosticker.includes(groupId) : false
+        const isAntiNsfw = isGroupMsg ? _antinsfw.includes(groupId) : false
+        const isMute = isGroupMsg ? _mute.includes(chat.id) : false
+        const isAfkOn = isGroupMsg ? afk.checkAfkUser(sender.id, _afk) : false
+        const isAntiBadWords = isGroupMsg ? _badwords.includes(groupId) : false
+        const isQuotedImage = quotedMsg && quotedMsg.type === 'image'
+        const isQuotedVideo = quotedMsg && quotedMsg.type === 'video'
+        const isQuotedSticker = quotedMsg && quotedMsg.type === 'sticker'
+        const isQuotedGif = quotedMsg && quotedMsg.mimetype === 'image/gif'
+        const isQuotedAudio = quotedMsg && quotedMsg.type === 'audio'
+        const isQuotedVoice = quotedMsg && quotedMsg.type === 'ptt'
+        const isImage = type === 'image'
+        const isVideo = type === 'video'
+        const isAudio = type === 'audio'
+        const isVoice = type === 'ptt'
+        const isGif = mimetype === 'image/gif'
+        /********** END OF VALIDATOR **********/
+
+        // Automate
+        premium.expiredCheck(_premium)
+        cron.schedule('0 0 * * *', () => {
+            const reset = []
+            _limit = reset
+            console.log('Hang tight, it\'s time to reset usage limits...')
+            fs.writeFileSync('./database/user/limit.json', JSON.stringify(_limit))
+            console.log('Success!')
+        }, {
+            scheduled: true,
+            timezone: 'Asia/Jakarta'
+        })
+
+        // ROLE (Change to what you want, or add) and you can change the role sort based on XP.
+        const levelRole = level.getLevelingLevel(sender.id, _level)
+        var role = 'Copper V'
+        if (levelRole >= 5) {
+            role = 'Copper IV'
+        }
+        if (levelRole >= 10) {
+            role = 'Copper III'
+        }
+        if (levelRole >= 15) {
+            role = 'Copper II'
+        }
+        if (levelRole >= 20) {
+            role = 'Copper I'
+        }
+        if (levelRole >= 25) {
+            role = 'Silver V'
+        }
+        if (levelRole >= 30) {
+            role = 'Silver IV'
+        }
+        if (levelRole >= 35) {
+            role = 'Silver III'
+        }
+        if (levelRole >= 40) {
+            role = 'Silver II'
+        }
+        if (levelRole >= 45) {
+            role = 'Silver I'
+        }
+        if (levelRole >= 50) {
+            role = 'Gold V'
+        }
+        if (levelRole >= 55) {
+            role = 'Gold IV'
+        }
+        if (levelRole >= 60) {
+            role = 'Gold III'
+        }
+        if (levelRole >= 65) {
+            role = 'Gold II'
+        }
+        if (levelRole >= 70) {
+            role = 'Gold I'
+        }
+        if (levelRole >= 75) {
+            role = 'Platinum V'
+        }
+        if (levelRole >= 80) {
+            role = 'Platinum IV'
+        }
+        if (levelRole >= 85) {
+            role = 'Platinum III'
+        }
+        if (levelRole >= 90) {
+            role = 'Platinum II'
+        }
+        if (levelRole >= 95) {
+            role = 'Platinum I'
+        }
+        if (levelRole >= 100) {
+            role = 'Exterminator'
+        }
+
+        // Leveling [BETA] by Slavyan
+        if (isGroupMsg && isRegistered && !level.isGained(sender.id) && !isBanned && isLevelingOn) {
+            try {
+                level.addCooldown(sender.id)
+                const currentLevel = level.getLevelingLevel(sender.id, _level)
+                const amountXp = Math.floor(Math.random() * (15 - 25 + 1) + 15)
+                const requiredXp = 5 * Math.pow(currentLevel, 2) + 50 * currentLevel + 100
+                level.addLevelingXp(sender.id, amountXp, _level)
+                if (requiredXp <= level.getLevelingXp(sender.id, _level)) {
+                    level.addLevelingLevel(sender.id, 1, _level)
+                    const userLevel = level.getLevelingLevel(sender.id, _level)
+                    const fetchXp = 5 * Math.pow(userLevel, 2) + 50 * userLevel + 100
+                    await ruriko.reply(from, `*── 「 LEVEL UP 」 ──*\n\n➸ *Name*: ${pushname}\n➸ *XP*: ${level.getLevelingXp(sender.id, _level)} / ${fetchXp}\n➸ *Level*: ${currentLevel} -> ${level.getLevelingLevel(sender.id, _level)} 🆙 \n➸ *Role*: *${role}*`, id)
+                }
+            } catch (err) {
+                console.error(err)
+            }
+        }
+
+        // Anti group link detector
+        if (isGroupMsg && !isGroupAdmins && isBotGroupAdmins && isDetectorOn && !isOwner) {
+            if (chats.match(new RegExp(/(https:\/\/chat.whatsapp.com)/gi))) {
+                const valid = await ruriko.inviteInfo(chats)
+                if (valid) {
+                    console.log(color('[KICK]', 'red'), color('Received a group link and it is a valid link!', 'yellow'))
+                    await ruriko.reply(from, eng.linkDetected(), id)
+                    await ruriko.removeParticipant(groupId, sender.id)
+                } else {
+                    console.log(color('[WARN]', 'yellow'), color('Received a group link but it is not a valid link!', 'yellow'))
+                }
+            }
+        }
+
+        // Anti virtext by: @VideFrelan
+        if (isGroupMsg && !isGroupAdmins && isBotGroupAdmins && !isOwner) {
+            if (chats.length >= 5000) {
+                await ruriko.sendTextWithMentions(from, `@${sender.id} is detected sending a virtext.\nYou will be kicked!`)
+                await ruriko.removeParticipant(groupId, sender.id)
+            }
+        }
+
+        // Anti fake group link detector by: Baguettou
+        if (isGroupMsg && !isGroupAdmins && isBotGroupAdmins && isDetectorOn && !isOwner) {
+            if (chats.match(new RegExp(/(https:\/\/chat.(?!whatsapp.com))/gi))) {
+                console.log(color('[KICK]', 'red'), color('Received a fake group link!', 'yellow'))
+                await ruriko.reply(from, 'Fake group link detected!', id)
+                await ruriko.removeParticipant(groupId, sender.id)
+            }
+        }
+
+        // Anti badwords
+        if (isGroupMsg && isBotGroupAdmins && isAntiBadWords) {
+            if (badwords.isProfane(chats)) {
+                await ruriko.deleteMessage(chat.id, id, false)
+            }
+        }
+
+        // Anti NSFW link
+        if (isGroupMsg && !isGroupAdmins && isBotGroupAdmins && isAntiNsfw && !isOwner) {
+            if (isUrl(chats)) {
+                const classify = new URL(isUrl(chats))
+                console.log(color('[FILTER]', 'yellow'), 'Checking link:', classify.hostname)
+                isPorn(classify.hostname, async (err, status) => {
+                    if (err) return console.error(err)
+                    if (status) {
+                        console.log(color('[NSFW]', 'red'), color('The link is classified as NSFW!', 'yellow'))
+                        await ruriko.reply(from, eng.linkNsfw(), id)
+                        await ruriko.removeParticipant(groupId, sender.id)
+                    } else {
+                        console.log(('[NEUTRAL]'), color('The link is safe!'))
+                    }
+                })
+            }
+        }
+
+        // Auto sticker
+        if (isGroupMsg && isAutoStickerOn && isMedia && isImage && !isCmd) {
+            const mediaData = await decryptMedia(message)
+            const imageBase64 = `data:${mimetype};base64,${mediaData.toString('base64')}`
+            await ruriko.sendImageAsSticker(from, imageBase64, { author: authorWm, pack: packWm, keepScale: true })
+            console.log(`Sticker processed for ${processTime(t, moment())} seconds`)
+        }
+
+        // Auto sticker video
+        if (isGroupMsg && isAutoStickerOn && isMedia && isVideo && !isCmd) {
+            const mediaData = await decryptMedia(message)
+            const videoBase64 = `data:${mimetype};base64,${mediaData.toString('base64')}`
+            await ruriko.sendMp4AsSticker(from, videoBase64, { stickerMetadata: true, pack: packWm, author: authorWm, fps: 30, startTime: '00:00:00.0', endTime: '00:00:05.0', crop: false, loop: 0 })
+            console.log(`Sticker processed for ${processTime(t, moment())} seconds`)
+        }
+
+        // AFK by Slavyan
+        if (isGroupMsg) {
+            for (let ment of mentionedJidList) {
+                if (afk.checkAfkUser(ment, _afk)) {
+                    const getId = afk.getAfkId(ment, _afk)
+                    const getReason = afk.getAfkReason(getId, _afk)
+                    const getTime = afk.getAfkTime(getId, _afk)
+                    await ruriko.reply(from, eng.afkMentioned(getReason, getTime), id)
+                }
+            }
+            if (afk.checkAfkUser(sender.id, _afk) && !isCmd) {
+                _afk.splice(afk.getAfkPosition(sender.id, _afk), 1)
+                fs.writeFileSync('./database/user/afk.json', JSON.stringify(_afk))
+                await ruriko.sendText(from, eng.afkDone(pushname))
+            }
+        }
+
+        // Mute
+        if (isCmd && isMute && !isGroupAdmins && !isOwner && !isPremium) return
+
+        // Ignore banned and blocked users
+        if (isCmd && (isBanned || isBlocked) && !isGroupMsg) return console.log(color('[BAN]', 'red'), color(time, 'yellow'), color(`${command} [${args.length}]`), 'from', color(pushname))
+        if (isCmd && (isBanned || isBlocked) && isGroupMsg) return console.log(color('[BAN]', 'red'), color(time, 'yellow'), color(`${command} [${args.length}]`), 'from', color(pushname), 'in', color(name || formattedTitle))
+
+        // Anti spam
+        if (isCmd && msgFilter.isFiltered(from) && !isGroupMsg) return console.log(color('[SPAM]', 'red'), color(time, 'yellow'), color(`${command} [${args.length}]`), 'from', color(pushname))
+        if (isCmd && msgFilter.isFiltered(from) && isGroupMsg) return console.log(color('[SPAM]', 'red'), color(time, 'yellow'), color(`${command} [${args.length}]`), 'from', color(pushname), 'in', color(name || formattedTitle))
+
+        // Log
+        if (isCmd && !isGroupMsg) {
+            console.log(color('[CMD]'), color(time, 'yellow'), color(`${command} [${args.length}]`), 'from', color(pushname))
+            await ruriko.sendSeen(from)
+        }
+        if (isCmd && isGroupMsg) {
+            console.log(color('[CMD]'), color(time, 'yellow'), color(`${command} [${args.length}]`), 'from', color(pushname), 'in', color(name || formattedTitle))
+            await ruriko.sendSeen(from)
+        }
+
+        // Anti spam
+        if (isCmd && !isPremium && !isOwner) msgFilter.addFilter(from)
+
+        switch (command) {
+            // Register by Slavyan
+            case 'register':
+                if (isGroupMsg) return await ruriko.reply(from, eng.pcOnly(), id)
+                if (isRegistered) return await ruriko.reply(from, eng.registeredAlready(), id)
+                if (!q) return await ruriko.reply(from, eng.wrongFormat(), id)
+                const serialUser = createSerial(20)
+                register.addRegisteredUser(sender.id, q, time, serialUser, _registered)
+                await ruriko.reply(from, eng.registered(q, sender.id, time, serialUser), id)
+                console.log(color('[REGISTER]'), color(time, 'yellow'), 'Name:', color(q, 'cyan'), 'Serial:', color(serialUser, 'cyan'))
+                break
+            case 'unregister':
+            case 'unreg':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                _registered.splice(register.getRegisteredPosition(sender.id, _registered), 1)
+                fs.writeFileSync('./database/bot/registered.json', JSON.stringify(_registered))
+                await ruriko.reply(from, eng.unreg(), id)
+                break
+
+            // Level [BETA] by Slavyan
+            case 'level':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isLevelingOn) return await ruriko.reply(from, eng.levelingNotOn(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                const userLevel = level.getLevelingLevel(sender.id, _level)
+                const userXp = level.getLevelingXp(sender.id, _level)
+                const ppLink = await ruriko.getProfilePicFromServer(sender.id)
+                if (ppLink === undefined) {
+                    var pepe = errorImg
+                } else {
+                    pepe = ppLink
+                }
+                const requiredXp = 5 * Math.pow(userLevel, 2) + 50 * userLevel + 100
+                const rank = new canvas.Rank()
+                    .setAvatar(pepe)
+                    .setLevel(userLevel)
+                    .setLevelColor('#ffa200', '#ffa200')
+                    .setRank(Number(level.getUserRank(sender.id, _level)))
+                    .setCurrentXP(userXp)
+                    .setOverlay('#000000', 100, false)
+                    .setRequiredXP(requiredXp)
+                    .setProgressBar('#ffa200', 'COLOR')
+                    .setBackground('COLOR', '#000000')
+                    .setUsername(pushname)
+                    .setDiscriminator(sender.id.substring(6, 10))
+                rank.build()
+                    .then(async (buffer) => {
+                        const imageBase64 = `data:image/png;base64,${buffer.toString('base64')}`
+                        await ruriko.sendImage(from, imageBase64, 'rank.png', '', id)
+                    })
+                    .catch(async (err) => {
+                        console.error(err)
+                        await ruriko.reply(from, 'Error!', id)
+                    })
+                break
+            case 'leaderboard':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isLevelingOn) return await ruriko.reply(from, eng.levelingNotOn(), id)
+                if (!isGroupMsg) return await ruriko.reply(from.eng.groupOnly(), id)
+                const resp = _level
+                _level.sort((a, b) => (a.xp < b.xp) ? 1 : -1)
+                let leaderboard = '*── 「 LEADERBOARDS 」 ──*\n\n'
+                try {
+                    for (let i = 0; i < 10; i++) {
+                        var roles = 'Copper V'
+                        if (resp[i].level >= 5) {
+                            roles = 'Copper IV'
+                        }
+                        if (resp[i].level >= 10) {
+                            roles = 'Copper III'
+                        }
+                        if (resp[i].level >= 15) {
+                            roles = 'Copper II'
+                        }
+                        if (resp[i].level >= 20) {
+                            roles = 'Copper I'
+                        }
+                        if (resp[i].level >= 25) {
+                            roles = 'Silver V'
+                        }
+                        if (resp[i].level >= 30) {
+                            roles = 'Silver IV'
+                        }
+                        if (resp[i].level >= 35) {
+                            roles = 'Silver III'
+                        }
+                        if (resp[i].level >= 40) {
+                            roles = 'Silver II'
+                        }
+                        if (resp[i].level >= 45) {
+                            roles = 'Silver I'
+                        }
+                        if (resp[i].level >= 50) {
+                            roles = 'Gold V'
+                        }
+                        if (resp[i].level >= 55) {
+                            roles = 'Gold IV'
+                        }
+                        if (resp[i].level >= 60) {
+                            roles = 'Gold III'
+                        }
+                        if (resp[i].level >= 65) {
+                            roles = 'Gold II'
+                        }
+                        if (resp[i].level >= 70) {
+                            roles = 'Gold I'
+                        }
+                        if (resp[i].level >= 75) {
+                            roles = 'Platinum V'
+                        }
+                        if (resp[i].level >= 80) {
+                            roles = 'Platinum IV'
+                        }
+                        if (resp[i].level >= 85) {
+                            roles = 'Platinum III'
+                        }
+                        if (resp[i].level >= 90) {
+                            roles = 'Platinum II'
+                        }
+                        if (resp[i].level >= 95) {
+                            roles = 'Platinum I'
+                        }
+                        if (resp[i].level > 100) {
+                            roles = 'Exterminator'
+                        }
+                        leaderboard += `${i + 1}. wa.me/${_level[i].id.replace('@c.us', '')}\n➸ *XP*: ${_level[i].xp} *Level*: ${_level[i].level}\n➸ *Role*: ${roles}\n\n`
+                    }
+                    await ruriko.reply(from, leaderboard, id)
+                } catch (err) {
+                    console.error(err)
+                    await ruriko.reply(from, eng.minimalDb(), id)
+                }
+                break
+
+            // Downloader
+            case 'twitter':
+            case 'twt':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isUrl(url) && !url.includes('twitter.com')) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                await ruriko.reply(from, eng.wait(), id)
+                downloader.tweet(url)
+                    .then(async (data) => {
+                        const content = data.variants.filter((x) => x.content_type !== 'application/x-mpegURL').sort((a, b) => b.bitrate - a.bitrate)
+                        await ruriko.sendFileFromUrl(from, content[0].url, 'video.mp4', null, id)
+                            .then(() => console.log('Success sending Twitter video!'))
+                            .catch(async (err) => {
+                                console.error(err)
+                                await ruriko.reply(from, 'Error!', id)
+                            })
+                    })
+                break
+            case 'youtube':
+            case 'yt':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isUrl(url)) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                await ruriko.reply(from, eng.wait(), id)
+                downloader.yt(url, sender.id)
+                    .then(async ({ path }) => {
+                        await ruriko.sendFile(from, path, 'video.mp4', null, id)
+                            .then(() => fs.unlinkSync(path))
+                    })
+                    .catch(async (err) => {
+                        console.error(err)
+                        await ruriko.reply(from, 'Error!', id)
+                    })
+                break
+
+            // Misc
+            // OpenAI API Implementation by: VideFrelan
+            case 'ai':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (config.openAiKey == 'api-key') return await ruriko.reply(from, 'Invalid OpenAi Apikey. Please get your ApiKey at: https://platform.openai.com/account/api-keys', id)
+                if (!q) return await ruriko.reply(from, eng.wrongFormat(), id)
+                try {
+                    await ruriko.simulateTyping(from, true)
+                    console.log(color('[AI]', 'cyan'), color(`Thinking the answers for "${q}"...`, 'yellow'))
+                    const configuration = new Configuration({ apiKey: config.openAiKey })
+                    const openai = new OpenAIApi(configuration)
+                    const completion = await openai.createChatCompletion({
+                        model: 'gpt-3.5-turbo',
+                        messages: [{ role: 'user', content: q }],
+                    })
+                    await ruriko.reply(from, completion.data.choices[0].message.content, id)
+                    await ruriko.simulateTyping(from, false)
+                } catch (err) {
+                    console.error(err)
+                    await ruriko.reply(from, `Error: ${err.message}`, id)
+                }
+                break
+            case 'image':
+            case 'img':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (config.openAiKey == 'api-key') return await ruriko.reply(from, 'Invalid OpenAi Apikey. Please get your ApiKey at: https://platform.openai.com/account/api-keys', id)
+                if (!q) return await ruriko.reply(from, eng.wrongFormat(), id)
+                await ruriko.reply(from, eng.wait(), id)
+                try {
+                    const configuration = new Configuration({ apiKey: config.openAiKey })
+                    const openai = new OpenAIApi(configuration)
+                    const completion = await openai.createImage({
+                        prompt: q,
+                        n: 1,
+                        size: '1024x1024',
+                    })
+                    await ruriko.sendFileFromUrl(from, completion.data.data[0].url, 'image.jpg', null, id)
+                } catch (err) {
+                    console.error(err)
+                    await ruriko.reply(from, `Error: ${err.message}`, id)
+                }
+                break
+            case 'ocr': // OCR by VideFrelan
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                const ocrconf = {
+                    lang: 'eng',
+                    oem: '1',
+                    psm: '3'
+                }
+                if (isMedia && isImage || isQuotedImage) {
+                    await ruriko.reply(from, eng.wait(), id)
+                    const encryptMedia = isQuotedImage ? quotedMsg : message
+                    const mediaData = await decryptMedia(encryptMedia)
+                    fs.writeFileSync(`./${sender.id}.jpg`, mediaData)
+                    ocrtess.recognize(`./${sender.id}.jpg`, ocrconf)
+                        .then(async (text) => {
+                            await ruriko.reply(from, `*...:* *OCR RESULT* *:...*\n\n${text}`, id)
+                            fs.unlinkSync(`./${sender.id}.jpg`)
+                        })
+                        .catch(async (err) => {
+                            console.error(err)
+                            await ruriko.reply(from, 'Error!', id)
+                        })
+                } else if (quotedMsg && quotedMsg.type == 'sticker') {
+                    await ruriko.reply(from, eng.wait(), id)
+                    const mediaData = await decryptMedia(quotedMsg)
+                    fs.writeFileSync(`./${sender.id}.jpg`, mediaData)
+                    ocrtess.recognize(`./${sender.id}.jpg`, ocrconf)
+                        .then(async (text) => {
+                            await ruriko.reply(from, `*...:* *OCR RESULT* *:...*\n\n${text}`, id)
+                            fs.unlinkSync(`./${sender.id}.jpg`)
+                        })
+                        .catch(async (err) => {
+                            console.error(err)
+                            await ruriko.reply(from, 'Error!', id)
+                        })
+                } else {
+                    await ruriko.reply(from, `Untuk menggunakan ocr\nsilahkan upload atau reply foto dengan perintah ${prefix}ocr\n\nAtau anda juga bisa reply sticker dengan perintah ${prefix}ocr`, id)
+                }
+                break
+            case 'google': // chika-chantekkzz
+            case 'googlesearch':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!q) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                await ruriko.reply(from, eng.wait(), id)
+                google({ 'query': q, 'no-display': true })
+                    .then(async (results) => {
+                        let txt = `*── 「 GOOGLE SEARCH 」 ──*\n\n*by: rashidsiregar28*\n\n_*Search results for: ${q}*_`
+                        for (let i = 0; i < results.length; i++) {
+                            txt += `\n\n➸ *Title*: ${results[i].title}\n➸ *Desc*: ${results[i].snippet}\n➸ *Link*: ${results[i].link}\n\n=_=_=_=_=_=_=_=_=_=_=_=_=`
+                        }
+                        await ruriko.reply(from, txt, id)
+                    })
+                    .catch(async (err) => {
+                        console.error(err)
+                        await ruriko.reply(from, 'Error!', id)
+                    })
+                break
+            case 'say':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!q) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                await ruriko.sendText(from, q)
+                break
+            case 'afk': // by Slavyan
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (isAfkOn) return await ruriko.reply(from, eng.afkOnAlready(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                const reason = q ? q : 'Nothing.'
+                afk.addAfkUser(sender.id, time, reason, _afk)
+                await ruriko.reply(from, eng.afkOn(pushname, reason), id)
+                break
+            case 'genshininfo': // by chika chantexxzz
+            case 'genshin':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!q) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                await ruriko.reply(from, eng.wait(), id)
+                try {
+                    console.log('Searching for character...')
+                    const character = await genshin.characters(q)
+                    await ruriko.sendFileFromUrl(from, character.image, `${character.name}.jpg`, `*「 GENSHIN IMPACT 」*\n\n*${character.name}*\n${character.description}\n\n"_${character.quote}_" - ${character.name}\n\n➸ *Name*: ${character.name}\n➸ *Seiyuu*: ${character.cv}\n➸ *Region*: ${character.city}\n➸ *Rating*: ${character.rating}\n➸ *Vision*: ${character.element}\n➸ *Weapon*: ${character.weapon}\n\n${character.url}`)
+                    console.log('Success sending Genshin Impact character!')
+                } catch (err) {
+                    console.error(err)
+                    await ruriko.reply(from, 'Error or character not found!', id)
+                }
+                break
+            case 'tts':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!q) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                const speech = q.substring(q.indexOf('|') + 2)
+                const ptt = tts(ar[0])
+                try {
+                    ptt.save(`temp/${speech}.mp3`, speech, async () => {
+                        await ruriko.sendPtt(from, `temp/${speech}.mp3`, id)
+                        fs.unlinkSync(`temp/${speech}.mp3`)
+                    })
+                } catch (err) {
+                    console.error(err)
+                    await ruriko.reply(from, 'Error!', id)
+                }
+                break
+            case 'tomp3': // by Piyobot
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (isMedia && isVideo || isQuotedVideo) {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, eng.wait(), id)
+                    const encryptMedia = isQuotedVideo ? quotedMsg : message
+                    const _mimetype = isQuotedVideo ? quotedMsg.mimetype : mimetype
+                    console.log(color('[WAPI]', 'green'), 'Downloading and decrypting media...')
+                    const mediaData = await decryptMedia(encryptMedia)
+                    const temp = './temp'
+                    const name = new Date() * 1
+                    const fileInputPath = path.join(temp, 'video', `${name}.${_mimetype.replace(/.+\//, '')}`)
+                    const fileOutputPath = path.join(temp, 'audio', `${name}.mp3`)
+                    fs.writeFile(fileInputPath, mediaData, (err) => {
+                        if (err) return console.error(err)
+                        ffmpeg(fileInputPath)
+                            .format('mp3')
+                            .on('start', (commandLine) => console.log(color('[FFmpeg]', 'green'), commandLine))
+                            .on('progress', (progress) => console.log(color('[FFmpeg]', 'green'), progress))
+                            .on('end', async () => {
+                                console.log(color('[FFmpeg]', 'green'), 'Processing finished!')
+                                await ruriko.sendFile(from, fileOutputPath, 'audio.mp3', '', id)
+                                console.log(color('[WAPI]', 'green'), 'Success sending mp3!')
+                                setTimeout(() => {
+                                    fs.unlinkSync(fileInputPath)
+                                    fs.unlinkSync(fileOutputPath)
+                                }, 30000)
+                            })
+                            .save(fileOutputPath)
+                    })
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'toptt':
+            case 'ptt':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (isMedia && isAudio || isQuotedAudio) {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, eng.wait(), id)
+                    const encryptMedia = isQuotedAudio ? quotedMsg : message
+                    const mediaData = await decryptMedia(encryptMedia)
+                    const name = new Date() * 1
+                    fs.writeFileSync(`./temp/audio/${name}.mp3`, mediaData)
+                    await ruriko.sendPtt(from, `./temp/audio/${name}.mp3`, id)
+                    fs.unlinkSync(`./temp/audio/${name}.mp3`)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'math':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!q) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (typeof mathjs.evaluate(q) !== 'number') {
+                    await ruriko.reply(from, eng.notNum(q), id)
+                } else {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, `*── 「 MATH 」 ──*\n\n${q} = ${mathjs.evaluate(q)}`, id)
+                }
+                break
+            case 'reminder': // by Slavyan
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!q.includes('|')) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                const timeRemind = q.substring(0, q.indexOf('|') - 1)
+                const messRemind = q.substring(q.lastIndexOf('|') + 2)
+                const parsedTime = ms(toMs(timeRemind))
+                reminder.addReminder(sender.id, messRemind, timeRemind, _reminder)
+                await ruriko.sendTextWithMentions(from, eng.reminderOn(messRemind, parsedTime, sender))
+                const intervRemind = setInterval(async () => {
+                    if (Date.now() >= reminder.getReminderTime(sender.id, _reminder)) {
+                        await ruriko.sendTextWithMentions(from, eng.reminderAlert(reminder.getReminderMsg(sender.id, _reminder), sender))
+                        _reminder.splice(reminder.getReminderPosition(sender.id, _reminder), 1)
+                        fs.writeFileSync('./database/user/reminder.json', JSON.stringify(_reminder))
+                        clearInterval(intervRemind)
+                    }
+                }, 1000)
+                break
+            case 'imagetourl':
+            case 'imgtourl':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (isMedia && isImage || isQuotedImage) {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, eng.wait(), id)
+                    const encryptMedia = isQuotedImage ? quotedMsg : message
+                    const mediaData = await decryptMedia(encryptMedia)
+                    const linkImg = await uploadImages(mediaData, `${sender.id}_img`)
+                    await ruriko.reply(from, linkImg, id)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'translate':
+            case 'tl':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                if (quotedMsg) {
+                    const textos = quotedMsg.body
+                    const languagets = args[0]
+                    translate(textos, { to: languagets }).then(ress => { ruriko.reply(from, ress.text, id) })
+                } else {
+                    const texto = q.substring(0, q.indexOf('|') - 1)
+                    const languaget = q.substring(q.lastIndexOf('|') + 2)
+                    translate(texto, { to: languaget }).then(res => { ruriko.reply(from, res.text, id) })
+                }
+                break
+            case 'bass':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (isMedia && isAudio || isQuotedAudio || isVoice || isQuotedVoice) {
+                    if (args.length !== 1) return await ruriko.reply(from, eng.wrongFormat(), id)
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, eng.wait(), id)
+                    const encryptMedia = isQuotedAudio || isQuotedVoice ? quotedMsg : message
+                    console.log(color('[WAPI]', 'green'), 'Downloading and decrypting media...')
+                    const mediaData = await decryptMedia(encryptMedia)
+                    const temp = './temp'
+                    const name = new Date() * 1
+                    const fileInputPath = path.join(temp, `${name}.mp3`)
+                    const fileOutputPath = path.join(temp, 'audio', `${name}.mp3`)
+                    fs.writeFile(fileInputPath, mediaData, (err) => {
+                        if (err) return console.error(err)
+                        ffmpeg(fileInputPath)
+                            .audioFilter(`equalizer=f=40:width_type=h:width=50:g=${args[0]}`)
+                            .format('mp3')
+                            .on('start', (commandLine) => console.log(color('[FFmpeg]', 'green'), commandLine))
+                            .on('progress', (progress) => console.log(color('[FFmpeg]', 'green'), progress))
+                            .on('end', async () => {
+                                console.log(color('[FFmpeg]', 'green'), 'Processing finished!')
+                                await ruriko.sendPtt(from, fileOutputPath, id)
+                                console.log(color('[WAPI]', 'green'), 'Success sending audio!')
+                                setTimeout(() => {
+                                    fs.unlinkSync(fileInputPath)
+                                    fs.unlinkSync(fileOutputPath)
+                                }, 30000)
+                            })
+                            .save(fileOutputPath)
+                    })
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'quizizz':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                await ruriko.reply(from, eng.wait(), id)
+                if (!q) return await ruriko.reply(from, eng.wrongFormat(), id)
+                quizizz(q)
+                    .then(async (result) => {
+                        const ResultText = `Quizizz Hack Berhasil\n\nSilahkan Cek Jawabannya Di Link ${result.url}`
+                        await ruriko.sendLinkWithAutoPreview(from, result.url, ResultText, null, id)
+                    })
+                    .catch(async () => {
+                        await ruriko.sendText(from, 'Link Quizizz Tidak Di Temukan atau Api Sedang Error', id)
+                    })
+                break
+            case 'nightcore':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (isMedia && isAudio || isQuotedAudio || isVoice || isQuotedVoice) {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, eng.wait(), id)
+                    const encryptMedia = isQuotedAudio || isQuotedVoice ? quotedMsg : message
+                    console.log(color('[WAPI]', 'green'), 'Downloading and decrypting media...')
+                    const mediaData = await decryptMedia(encryptMedia)
+                    const temp = './temp'
+                    const name = new Date() * 1
+                    const fileInputPath = path.join(temp, `${name}.mp3`)
+                    const fileOutputPath = path.join(temp, 'audio', `${name}.mp3`)
+                    fs.writeFile(fileInputPath, mediaData, (err) => {
+                        if (err) return console.error(err)
+                        ffmpeg(fileInputPath)
+                            .audioFilter('asetrate=44100*1.25')
+                            .format('mp3')
+                            .on('start', (commandLine) => console.log(color('[FFmpeg]', 'green'), commandLine))
+                            .on('progress', (progress) => console.log(color('[FFmpeg]', 'green'), progress))
+                            .on('end', async () => {
+                                console.log(color('[FFmpeg]', 'green'), 'Processing finished!')
+                                await ruriko.sendPtt(from, fileOutputPath, id)
+                                console.log(color('[WAPI]', 'green'), 'Success sending audio!')
+                                setTimeout(() => {
+                                    fs.unlinkSync(fileInputPath)
+                                    fs.unlinkSync(fileOutputPath)
+                                }, 30000)
+                            })
+                            .save(fileOutputPath)
+                    })
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+
+            // Bot
+            case 'menu':
+            case 'help':
+                const jumlahUser = _registered.length
+                const levelMenu = level.getLevelingLevel(sender.id, _level)
+                const xpMenu = level.getLevelingXp(sender.id, _level)
+                const reqXpMenu = 5 * Math.pow(levelMenu, 2) + 50 * 1 + 100
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (args[0] === '1') {
+                    await ruriko.sendText(from, eng.menuDownloader())
+                } else if (args[0] === '2') {
+                    await ruriko.sendText(from, eng.menuBot())
+                } else if (args[0] === '3') {
+                    await ruriko.sendText(from, eng.menuMisc())
+                } else if (args[0] === '4') {
+                    await ruriko.sendText(from, eng.menuSticker())
+                } else if (args[0] === '5') {
+                    await ruriko.sendText(from, eng.menuWeeaboo())
+                } else if (args[0] === '6') {
+                    await ruriko.sendText(from, eng.menuFun())
+                } else if (args[0] === '7') {
+                    await ruriko.sendText(from, eng.menuModeration())
+                } else if (args[0] === '8') {
+                    if (!isOwner) return await ruriko.reply(from, eng.ownerOnly())
+                    await ruriko.sendText(from, eng.menuOwner())
+                } else if (args[0] === '9') {
+                    if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                    await ruriko.sendText(from, eng.menuLeveling())
+                } else if (args[0] === '10') {
+                    await ruriko.sendText(from, eng.menuAi())
+                } else if (args[0] === '11') {
+                    await ruriko.sendText(from, eng.menuNsfw())
+                } else {
+                    await ruriko.sendText(from, eng.menu(jumlahUser, levelMenu, xpMenu, role, pushname, reqXpMenu, isPremium ? 'YES' : 'NO'))
+                }
+                break
+            case 'rules':
+            case 'rule':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                await ruriko.sendText(from, eng.rules())
+                break
+            case 'status':
+            case 'stats':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                await ruriko.sendText(from, `*RAM*: ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB / ${Math.round(os.totalmem / 1024 / 1024)} MB\n*CPU*: ${os.cpus()[0].model}`)
+                break
+            case 'listblock':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                let block = eng.listBlock(blockNumber)
+                for (let i of blockNumber) {
+                    block += `@${i.replace('@c.us', '')}\n`
+                }
+                await ruriko.sendTextWithMentions(from, block)
+                break
+            case 'ownerbot':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                await ruriko.sendContact(from, ownerNumber)
+                break
+            case 'runtime': // BY HAFIZH
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                const formater = (seconds) => {
+                    const pad = (s) => {
+                        return (s < 10 ? '0' : '') + s
+                    }
+                    const hrs = Math.floor(seconds / (60 * 60))
+                    const mins = Math.floor(seconds % (60 * 60) / 60)
+                    const secs = Math.floor(seconds % 60)
+                    return ' ' + pad(hrs) + ':' + pad(mins) + ':' + pad(secs)
+                }
+                const uptime = process.uptime()
+                await ruriko.reply(from, `*── 「 BOT UPTIME 」 ──*\n\n❏${formater(uptime)}`, id)
+                break
+            case 'ping':
+            case 'p':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                await ruriko.sendText(from, `Pong!\nSpeed: ${processTime(t, moment())} secs`)
+                break
+            case 'delete':
+            case 'del':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!quotedMsg) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (isGroupMsg) {
+                    if (!isBotGroupAdmins) return await ruriko.reply(from, eng.botNotAdmin(), id)
+                    if (isGroupAdmins) {
+                        await ruriko.deleteMessage(quotedMsgObj.chatId, quotedMsgObj.id, false)
+                    } else {
+                        if (!quotedMsgObj.fromMe) return await ruriko.reply(from, eng.wrongFormat(), id)
+                        await ruriko.deleteMessage(quotedMsgObj.chatId, quotedMsgObj.id, false)
+                    }
+                } else {
+                    if (!quotedMsgObj.fromMe) return await ruriko.reply(from, eng.wrongFormat(), id)
+                    await ruriko.deleteMessage(quotedMsgObj.chatId, quotedMsgObj.id, false)
+                }
+                break
+            case 'report':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!q) return await ruriko.reply(from, eng.emptyMess(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                const lastReport = daily.getLimit(sender.id, _daily)
+                if (lastReport !== undefined && cd - (Date.now() - lastReport) > 0) {
+                    const time = ms(cd - (Date.now() - lastReport))
+                    await ruriko.reply(from, eng.daily(time), id)
+                } else {
+                    if (isGroupMsg) {
+                        await ruriko.sendText(ownerNumber, `*── 「 REPORT 」 ──*\n\n*From*: ${pushname}\n*ID*: ${sender.id}\n*Group*: ${(name || formattedTitle)}\n*Message*: ${q}`)
+                        await ruriko.reply(from, eng.received(pushname), id)
+                    } else {
+                        await ruriko.sendText(ownerNumber, `*── 「 REPORT 」 ──*\n\n*From*: ${pushname}\n*ID*: ${sender.id}\n*Message*: ${q}`)
+                        await ruriko.reply(from, eng.received(pushname), id)
+                    }
+                    daily.addLimit(sender.id, _daily)
+                }
+                break
+            case 'tos':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                await ruriko.sendLinkWithAutoPreview(from, 'https://github.com/SlavyanDesu/rurikoBot', eng.tos(ownerNumber))
+                break
+            case 'join':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isUrl(url) && !url.includes('chat.whatsapp.com')) return await ruriko.reply(from, eng.wrongFormat(), id)
+                const checkInvite = await ruriko.inviteInfo(url)
+                if (isOwner) {
+                    await ruriko.joinGroupViaLink(url)
+                    await ruriko.reply(from, eng.ok(), id)
+                    await ruriko.sendText(checkInvite.id, `Hello! I was invited by ${pushname}`)
+                } else {
+                    const getGroupData = await ruriko.getAllGroups()
+                    if (getGroupData.length >= groupLimit) {
+                        await ruriko.reply(from, `Invite refused. Max group is: ${groupLimit}`, id)
+                    } else if (getGroupData.size <= memberLimit) {
+                        await ruriko.reply(from, `Invite refused. Minimum member is: ${memberLimit}`, id)
+                    } else {
+                        if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                        limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                        await ruriko.joinGroupViaLink(url)
+                        await ruriko.reply(from, eng.ok(), id)
+                        await ruriko.sendText(checkInvite.id, `Hello! I was invited by ${pushname}`)
+                    }
+                }
+                break
+            case 'premiumcheck':
+            case 'cekpremium':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isPremium) return await ruriko.reply(from, eng.notPremium(), id)
+                const cekExp = ms(premium.getPremiumExpired(sender.id, _premium) - Date.now())
+                await ruriko.reply(from, `*── 「 PREMIUM EXPIRED 」 ──*\n\n➸ *ID*: ${sender.id}\n➸ *Premium left*: ${cekExp.days} day(s) ${cekExp.hours} hour(s) ${cekExp.minutes} minute(s)`, id)
+                break
+            case 'premiumlist':
+            case 'listpremium':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                let listPremi = '*── 「 PREMIUM USERS 」 ──*\n\n'
+                const deret = premium.getAllPremiumUser(_premium)
+                const arrayPremi = []
+                for (let i = 0; i < deret.length; i++) {
+                    const checkExp = ms(premium.getPremiumExpired(deret[i], _premium) - Date.now())
+                    arrayPremi.push(await ruriko.getContact(premium.getAllPremiumUser(_premium)[i]))
+                    listPremi += `${i + 1}. wa.me/${premium.getAllPremiumUser(_premium)[i].replace('@c.us', '')}\n➸ *Name*: ${arrayPremi[i].pushname}\n➸ *Expired*: ${checkExp.days} day(s) ${checkExp.hours} hour(s) ${checkExp.minutes} minute(s)\n\n`
+                }
+                await ruriko.reply(from, listPremi, id)
+                break
+            case 'getpic':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (mentionedJidList.length !== 0) {
+                    const userPic = await ruriko.getProfilePicFromServer(mentionedJidList[0])
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    if (userPic === undefined) {
+                        var pek = errorImg
+                    } else {
+                        pek = userPic
+                    }
+                    await ruriko.sendFileFromUrl(from, pek, 'pic.jpg', '', id)
+                } else if (args.length !== 0) {
+                    const userPic = await ruriko.getProfilePicFromServer(args[0] + '@c.us')
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    if (userPic === undefined) {
+                        var peks = errorImg
+                    } else {
+                        peks = userPic
+                    }
+                    await ruriko.sendFileFromUrl(from, peks, 'pic.jpg', '', id)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'serial':
+                if (!isRegistered) return await ruriko.reply(from, eng.registered(), id)
+                if (isGroupMsg) return await ruriko.reply(from, eng.pcOnly(), id)
+                if (args.length !== 1) return await ruriko.reply(from, eng.wrongFormat(), id)
+                const serials = args[0]
+                if (register.checkRegisteredUserFromSerial(serials, _registered)) {
+                    const name = register.getRegisteredNameFromSerial(serials, _registered)
+                    const time = register.getRegisteredTimeFromSerial(serials, _registered)
+                    const id = register.getRegisteredIdFromSerial(serials, _registered)
+                    await ruriko.sendText(from, eng.registeredFound(name, time, serials, id))
+                } else {
+                    await ruriko.sendText(from, eng.registeredNotFound(serials))
+                }
+                break
+            case 'limit':
+                if (isPremium || isOwner) return await ruriko.reply(from, '⤞ Limit left: ∞ (UNLIMITED)', id)
+                await ruriko.reply(from, `⤞ Limit left: ${limit.getLimit(sender.id, _limit, limitCount)} / 25\n\n*_Limit direset pada pukul 00:00 WIB_*`, id)
+                break
+
+            // Weeb zone
+            case 'neko':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                await ruriko.reply(from, eng.wait(), id)
+                console.log('Get neko image...')
+                await ruriko.sendFileFromUrl(from, (await neko.neko()).url, 'neko.jpg', '', null, null, true)
+                    .then(() => console.log('Success sending neko image!'))
+                    .catch(async (err) => {
+                        console.error(err)
+                        await ruriko.reply(from, 'Error!', id)
+                    })
+                break
+            case 'wallpaper':
+            case 'wp':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                await ruriko.reply(from, eng.wait(), id)
+                console.log('Get wallpaper image...')
+                await ruriko.sendFileFromUrl(from, (await neko.wallpaper()).url, 'wallpaper.jpg', '', null, null, true)
+                    .then(() => console.log('Success sending wallpaper image!'))
+                    .catch(async (err) => {
+                        console.error(err)
+                        await ruriko.reply(from, 'Error!', id)
+                    })
+                break
+            case 'kemono':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                await ruriko.reply(from, eng.wait(), id)
+                console.log('Get kemonomimi image...')
+                await ruriko.sendFileFromUrl(from, (await neko.kemonomimi()).url, 'kemono.jpg', '', null, null, true)
+                    .then(() => console.log('Success sending kemonomimi image!'))
+                    .catch(async (err) => {
+                        console.error(err)
+                        await ruriko.reply(from, 'Error!', id)
+                    })
+                break
+            case 'wait':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (isMedia && isImage || isQuotedImage) {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, eng.wait(), id)
+                    const encryptMedia = isQuotedImage ? quotedMsg : message
+                    const mediaData = await decryptMedia(encryptMedia)
+                    const imageLink = await uploadImages(mediaData, sender.id)
+                    weeaboo.wait(imageLink)
+                        .then(async (data) => {
+                            if (!data.result.length) {
+                                await ruriko.reply(from, 'Anime not found!', id)
+                            } else {
+                                let text = ''
+                                if (data.result[0].similarity < 0.90) {
+                                    text += 'Low similarity... 🤔\n\n'
+                                }
+                                text += `*Title*: ${data.result[0].anilist.title.native}\n*Romaji*: ${data.result[0].anilist.title.romaji}\n*Episode*: ${data.result[0].episode}\n*Frames*: ${data.result[0].from} to ${data.result[0].to}\n*Similarity*: ${(data.result[0].similarity * 100).toFixed(1)}%\n*MyAnimeList*: https://myanimelist.net/anime/${data.result[0].anilist.idMal}`
+                                await ruriko.sendFileFromUrl(from, `${data.result[0].video}&size=l`, `${data.result[0].anilist.title.romaji}.mp4`, text, id)
+                            }
+                        })
+                        .catch(async (err) => {
+                            console.error(err)
+                            await ruriko.reply(from, 'Error!', id)
+                        })
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'source':
+            case 'sauce':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (isMedia && isImage || isQuotedImage) {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, eng.wait(), id)
+                    const encryptMedia = isQuotedImage ? quotedMsg : message
+                    const mediaData = await decryptMedia(encryptMedia)
+                    try {
+                        const imageLink = await uploadImages(mediaData, `sauce.${sender.id}`)
+                        console.log('Searching for source...')
+                        const results = await saus(imageLink)
+                        for (let i = 0; i < results.length; i++) {
+                            let teks = ''
+                            if (results[i].similarity < 80.00) {
+                                teks = 'Low similarity... 🤔\n\n'
+                            } else {
+                                teks += `*Link*: ${results[i].url}\n*Site*: ${results[i].site}\n*Author name*: ${results[i].authorName}\n*Author link*: ${results[i].authorUrl}\n*Similarity*: ${results[i].similarity}%`
+                                await ruriko.sendLinkWithAutoPreview(from, results[i].url, teks)
+                                    .then(() => console.log('Source found!'))
+                            }
+                        }
+                    } catch (err) {
+                        console.error(err)
+                        await ruriko.reply(from, 'Error!', id)
+                    }
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'waifu':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                await ruriko.reply(from, eng.wait(), id)
+                weeaboo.waifu(false)
+                    .then(async ({ url }) => {
+                        await ruriko.sendFileFromUrl(from, url, 'waifu.png', '', id)
+                            .then(() => console.log('Success sending waifu!'))
+                    })
+                    .catch(async (err) => {
+                        console.error(err)
+                        await ruriko.reply(from, 'Error!', id)
+                    })
+                break
+
+            // nsfw by staffFF6773
+            case 'nsfw':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id);
+            
+                // Check if NSFW is enabled
+                if (nsfwEnabled && !limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) {
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner);
+                    await ruriko.reply(from, eng.wait(), id);
+            
+                    weeaboo.waifu(true)
+                        .then(async ({ url }) => {
+                            await ruriko.sendFileFromUrl(from, url, 'waifuNsfw.png', '', id)
+                                .then(() => console.log('Success sending Nsfw!'));
+                        })
+                        .catch(async (err) => {
+                            console.error(err);
+                            await ruriko.reply(from, 'Error!', id);
+                        });
+                } else {
+                    await ruriko.reply(from, 'NSFW is currently disabled or you have reached the limit. Use `nsfwon` to enable it.', id);
+                }
+                break;
+                
+            case 'nsfwon':
+                if (isOwner && isGroupAdmins) {
+                    nsfwEnabled = true;
+                    await ruriko.reply(from, 'NSFW has been enabled.', id);
+                } else {
+                    await ruriko.reply(from, 'Only the owner can enable NSFW.', id);
+                }
+                break;
+                
+            case 'nsfwoff':
+                if (isOwner && isGroupAdmins) {
+                    nsfwEnabled = false;
+                    await ruriko.reply(from, 'NSFW has been disabled.', id);
+                } else {
+                    await ruriko.reply(from, 'Only the owner can disable NSFW.', id);
+                }
+                break;
+            // Fun
+            case 'profile':
+            case 'me':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                if (quotedMsg) {
+                    const getQuoted = quotedMsgObj.sender.id
+                    const profilePic = await ruriko.getProfilePicFromServer(getQuoted)
+                    const username = quotedMsgObj.sender.name
+                    const statuses = await ruriko.getStatus(getQuoted)
+                    const benet = _ban.includes(getQuoted) ? 'Yes' : 'No'
+                    const adm = groupAdmins.includes(getQuoted) ? 'Yes' : 'No'
+                    const premi = premium.checkPremiumUser(getQuoted, _premium) ? 'Yes' : 'No'
+                    const levelMe = level.getLevelingLevel(getQuoted, _level)
+                    const xpMe = level.getLevelingXp(getQuoted, _level)
+                    const req = 5 * Math.pow(levelMe, 2) + 50 * 1 + 100
+                    const { status } = statuses
+                    if (profilePic === undefined) {
+                        var pfp = errorImg
+                    } else {
+                        pfp = profilePic
+                    }
+                    await ruriko.sendFileFromUrl(from, pfp, `${username}.jpg`, eng.profile(username, status, premi, benet, adm, levelMe, req, xpMe), id)
+                } else {
+                    const profilePic = await ruriko.getProfilePicFromServer(sender.id)
+                    const username = pushname
+                    const statuses = await ruriko.getStatus(sender.id)
+                    const benet = isBanned ? 'Yes' : 'No'
+                    const adm = isGroupAdmins ? 'Yes' : 'No'
+                    const premi = isPremium ? 'Yes' : 'No'
+                    const levelMe = level.getLevelingLevel(sender.id, _level)
+                    const xpMe = level.getLevelingXp(sender.id, _level)
+                    const req = 5 * Math.pow(levelMe, 2) + 50 * 1 + 100
+                    const { status } = statuses
+                    if (profilePic === undefined) {
+                        var pfps = errorImg
+                    } else {
+                        pfps = profilePic
+                    }
+                    await ruriko.sendFileFromUrl(from, pfps, `${username}.jpg`, eng.profile(username, status, premi, benet, adm, levelMe, req, xpMe), id)
+                }
+                break
+            case 'triggered':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (isMedia && isImage || isQuotedImage) {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, eng.wait(), id)
+                    const encryptMedia = isQuotedImage ? quotedMsg : message
+                    console.log(color('[WAPI]', 'green'), 'Downloading and decrypting media...')
+                    const mediaData = await decryptMedia(encryptMedia)
+                    const temp = './temp'
+                    const name = new Date() * 1
+                    const fileInputPath = path.join(temp, `${name}.gif`)
+                    const fileOutputPath = path.join(temp, 'video', `${name}.mp4`)
+                    canvas.Canvas.trigger(mediaData)
+                        .then((buffer) => {
+                            canvas.write(buffer, fileInputPath)
+                            ffmpeg(fileInputPath)
+                                .outputOptions([
+                                    '-movflags faststart',
+                                    '-pix_fmt yuv420p',
+                                    '-vf scale=trunc(iw/2)*2:trunc(ih/2)*2'
+                                ])
+                                .inputFormat('gif')
+                                .on('start', (commandLine) => console.log(color('[FFmpeg]', 'green'), commandLine))
+                                .on('progress', (progress) => console.log(color('[FFmpeg]', 'green'), progress))
+                                .on('end', async () => {
+                                    console.log(color('[FFmpeg]', 'green'), 'Processing finished!')
+                                    await ruriko.sendMp4AsSticker(from, fileOutputPath, { fps: 30, startTime: '00:00:00.0', endTime: '00:00:05.0', loop: 0 })
+                                    console.log(color('[WAPI]', 'green'), 'Success sending GIF!')
+                                    setTimeout(() => {
+                                        fs.unlinkSync(fileInputPath)
+                                        fs.unlinkSync(fileOutputPath)
+                                    }, 30000)
+                                })
+                                .save(fileOutputPath)
+                        })
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'trash':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                try {
+                    await ruriko.reply(from, eng.wait(), id)
+                    for (let i = 0; i < mentionedJidList.length; i++) {
+                        const ypics = await ruriko.getProfilePicFromServer(mentionedJidList[i])
+                        if (ypics === undefined) {
+                            var ypfps = errorImg
+                        } else {
+                            ypfps = ypics
+                        }
+                    }
+                    canvas.Canvas.trash(ypfps)
+                        .then(async (buffer) => {
+                            canvas.write(buffer, `./temp/${sender.id}_trash.png`)
+                            await ruriko.sendFile(from, `./temp/${sender.id}_trash.png`, `${sender.id}_trash.png`, '', id)
+                            fs.unlinkSync(`./temp/${sender.id}_trash.png`)
+                        })
+                } catch (err) {
+                    console.error(err)
+                    await ruriko.reply(from, 'Error!', id)
+                }
+                break
+            case 'kiss':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                try {
+                    if (isMedia && isImage || isQuotedImage) {
+                        if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                        limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                        await ruriko.reply(from, eng.wait(), id)
+                        const encryptMedia = isQuotedImage ? quotedMsg : message
+                        const ppRaw = await ruriko.getProfilePicFromServer(sender.id)
+                        const ppSecond = await decryptMedia(encryptMedia)
+                        if (ppRaw === undefined) {
+                            var ppFirst = errorImg
+                        } else {
+                            ppFirst = ppRaw
+                        }
+                        canvas.Canvas.kiss(ppFirst, ppSecond)
+                            .then(async (buffer) => {
+                                canvas.write(buffer, `${sender.id}_kiss.png`)
+                                await ruriko.sendFile(from, `${sender.id}_kiss.png`, `${sender.id}_kiss.png`, '', id)
+                                fs.unlinkSync(`${sender.id}_kiss.png`)
+                            })
+                    } else {
+                        await ruriko.reply(from, eng.wrongFormat(), id)
+                    }
+                } catch (err) {
+                    console.error(err)
+                    await ruriko.reply(from, 'Error!', id)
+                }
+                break
+
+            // Sticker
+            case 'stikernobg':
+            case 'stickernobg': // by: VideFrelan
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (isMedia && isImage || isQuotedImage) {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, eng.wait(), id)
+                    const encryptMedia = isQuotedImage ? quotedMsg : message
+                    const mediaData = await decryptMedia(encryptMedia)
+                    await ruriko.sendImageAsSticker(from, mediaData, { author: authorWm, pack: packWm, removebg: true })
+                    console.log(`Sticker processed for ${processTime(t, moment())} seconds`)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'stickerwm': // By Slavyan
+            case 'stcwm':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isPremium) return await ruriko.reply(from, eng.notPremium(), id)
+                if (!q.includes('|')) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (isMedia && isImage || isQuotedImage) {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, eng.wait(), id)
+                    const packname = q.substring(0, q.indexOf('|') - 1)
+                    const author = q.substring(q.lastIndexOf('|') + 2)
+                    const encryptMedia = isQuotedImage ? quotedMsg : message
+                    const mediaData = await decryptMedia(encryptMedia)
+                    const _mimetype = isQuotedImage ? quotedMsg.mimetype : mimetype
+                    const imageBase64 = `data:${_mimetype};base64,${mediaData.toString('base64')}`
+                    await ruriko.sendImageAsSticker(from, imageBase64, { author: author, pack: packname })
+                    console.log(`Sticker processed for ${processTime(t, moment())} seconds`)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'stickermeme': // Chika Chantexx
+            case 'stcmeme':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!q.includes('|')) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (isMedia && isImage || isQuotedImage) {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, eng.wait(), id)
+                    const top = q.substring(0, q.indexOf('|') - 1)
+                    const topp = top.replace('', '_').replace('\n', '%5Cn').replace('?', '~q').replace('%', '~p').replace('#', '~h').replace('/', '~s')
+                    const bottom = q.substring(q.lastIndexOf('|') + 2)
+                    const bottomm = bottom.replace('', '_').replace('\n', '%5Cn').replace('?', '~q').replace('%', '~p').replace('#', '~h').replace('/', '~s')
+                    const encryptMedia = isQuotedImage ? quotedMsg : message
+                    const mediaData = await decryptMedia(encryptMedia)
+                    const getUrl = await uploadImages(mediaData, `meme.${sender.id}`)
+                    const create = `https://api.memegen.link/images/custom/${topp}/${bottomm}.png?background=${getUrl}`
+                    await ruriko.sendStickerfromUrl(from, create, null, { author: authorWm, pack: packWm, keepScale: true })
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'takestick': // By: VideFrelan
+            case 'take':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!q.includes('|')) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (quotedMsg && quotedMsg.type == 'sticker') {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, eng.wait(), id)
+                    const mediaDataTake = await decryptMedia(quotedMsg)
+                    const packname = q.substring(0, q.indexOf('|') - 1)
+                    const author = q.substring(q.lastIndexOf('|') + 2)
+                    const imageBase64 = `data:${quotedMsg.mimetype};base64,${mediaDataTake.toString('base64')}`
+                    await ruriko.sendImageAsSticker(from, imageBase64, { author: author, pack: packname })
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'sticker':
+            case 'stiker':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (isMedia && isImage || isQuotedImage) {
+                    await ruriko.reply(from, eng.wait(), id)
+                    const encryptMedia = isQuotedImage ? quotedMsg : message
+                    const mediaData = await decryptMedia(encryptMedia)
+                    const _mimetype = isQuotedImage ? quotedMsg.mimetype : mimetype
+                    const imageBase64 = `data:${_mimetype};base64,${mediaData.toString('base64')}`
+                    await ruriko.sendImageAsSticker(from, imageBase64, { author: authorWm, pack: packWm, keepScale: true })
+                    console.log(`Sticker processed for ${processTime(t, moment())} seconds`)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'stickergif':
+            case 'stikergif':
+            case 'sgif':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (isMedia && isVideo || isGif || isQuotedVideo || isQuotedGif) {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, eng.wait(), id)
+                    try {
+                        const encryptMedia = isQuotedGif || isQuotedVideo ? quotedMsg : message
+                        const mediaData = await decryptMedia(encryptMedia)
+                        const _mimetype = isQuotedVideo || isQuotedGif ? quotedMsg.mimetype : mimetype
+                        const videoBase64 = `data:${_mimetype};base64,${mediaData.toString('base64')}`
+                        await ruriko.sendMp4AsSticker(from, videoBase64, null, { stickerMetadata: true, author: authorWm, pack: packWm, keepScale: true, fps: 30, startTime: '00:00:00.0', endTime: '00:00:05.0', crop: false, loop: 0 })
+                            .then(() => {
+                                console.log(`Sticker processed for ${processTime(t, moment())} seconds`)
+                            })
+                    } catch (err) {
+                        console.error(err)
+                        await ruriko.reply(from, eng.videoLimit(), id)
+                    }
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'stickertoimg':
+            case 'stikertoimg':
+            case 'toimg':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (isQuotedSticker) {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, eng.wait(), id)
+                    try {
+                        const mediaData = await decryptMedia(quotedMsg)
+                        const imageBase64 = `data:${quotedMsg.mimetype};base64,${mediaData.toString('base64')}`
+                        await ruriko.sendFile(from, imageBase64, 'sticker.jpg', '', id)
+                    } catch (err) {
+                        console.error(err)
+                        await ruriko.reply(from, 'Error!', id)
+                    }
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+
+            // Moderation command
+            case 'revoke':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return ruriko.reply(from, eng.adminOnly(), id)
+                if (!isBotGroupAdmins) return ruriko.reply(from, eng.botNotAdmin(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                await ruriko.revokeGroupInviteLink(groupId)
+                await ruriko.sendTextWithMentions(from, `Group link revoked by @${sender.id.replace('@c.us', '')}`)
+                break
+            case 'grouplink':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return await ruriko.reply(from, eng.adminOnly(), id)
+                if (!isBotGroupAdmins) return await ruriko.reply(from, eng.botNotAdmin(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                const gcLink = await ruriko.getGroupInviteLink(groupId)
+                await ruriko.reply(from, gcLink, id)
+                break
+            case 'mutegc':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return ruriko.reply(from, eng.adminOnly(), id)
+                if (!isBotGroupAdmins) return ruriko.reply(from, eng.botNotAdmin(), id)
+                if (ar[0] === 'enable') {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.setGroupToAdminsOnly(groupId, true)
+                    await ruriko.sendText(from, eng.gcMute())
+                } else if (ar[0] === 'disable') {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.setGroupToAdminsOnly(groupId, false)
+                    await ruriko.sendText(from, eng.gcUnmute())
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'add':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return await ruriko.reply(from, eng.adminOnly(), id)
+                if (!isBotGroupAdmins) return await ruriko.reply(from, eng.botNotAdmin(), id)
+                if (args.length !== 1) return await ruriko.reply(from, eng.wrongFormat(), id)
+                try {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.addParticipant(from, `${args[0]}@c.us`)
+                    await ruriko.sendText(from, '🎉 Welcome! 🎉')
+                } catch (err) {
+                    console.error(err)
+                    await ruriko.reply(from, 'Error!', id)
+                }
+                break
+            case 'kick':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return await ruriko.reply(from, eng.adminOnly(), id)
+                if (!isBotGroupAdmins) return await ruriko.reply(from, eng.botNotAdmin(), id)
+                if (mentionedJidList.length === 0) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (mentionedJidList[0] === botNumber) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                await ruriko.sendTextWithMentions(from, `Good bye~\n${mentionedJidList.map(x => `@${x.replace('@c.us', '')}`).join('\n')}`)
+                for (let i of mentionedJidList) {
+                    if (groupAdmins.includes(i)) return await ruriko.sendText(from, eng.wrongFormat())
+                    await ruriko.removeParticipant(groupId, i)
+                }
+                break
+            case 'promote':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return await ruriko.reply(from, eng.adminOnly(), id)
+                if (!isBotGroupAdmins) return await ruriko.reply(from, eng.botNotAdmin(), id)
+                if (mentionedJidList.length !== 1) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (mentionedJidList[0] === botNumber) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (groupAdmins.includes(mentionedJidList[0])) return await ruriko.reply(from, eng.adminAlready(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                await ruriko.promoteParticipant(groupId, mentionedJidList[0])
+                await ruriko.reply(from, eng.ok(), id)
+                break
+            case 'demote':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return await ruriko.reply(from, eng.adminOnly(), id)
+                if (!isBotGroupAdmins) return await ruriko.reply(from, eng.botNotAdmin(), id)
+                if (mentionedJidList.length !== 1) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (mentionedJidList[0] === botNumber) return await ruriko.reply(from, eng.wrongFormat(), id)
+                if (!groupAdmins.includes(mentionedJidList[0])) return await ruriko.reply(from, eng.notAdmin(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                await ruriko.demoteParticipant(groupId, mentionedJidList[0])
+                await ruriko.reply(from, eng.ok(), id)
+                break
+            case 'leave':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return await ruriko.reply(from, eng.adminOnly(), id)
+                await ruriko.sendText(from, 'Bye~ 👋')
+                await ruriko.leaveGroup(groupId)
+                break
+            case 'everyone':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return await ruriko.reply(from, eng.adminOnly(), id)
+                if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                const groupMem = await ruriko.getGroupMembers(groupId)
+                const lastEveryone = daily.getLimit(sender.id, _daily)
+                if (lastEveryone !== undefined && cd - (Date.now() - lastEveryone) > 0) {
+                    const time = ms(cd - (Date.now() - lastEveryone))
+                    await ruriko.reply(from, eng.daily(time), id)
+                } else if (isOwner || isPremium) {
+                    let txt = '╔══✪〘 *EVERYONE* 〙✪══\n'
+                    for (let i = 0; i < groupMem.length; i++) {
+                        txt += '╠➥'
+                        txt += ` @${groupMem[i].id.replace(/@c.us/g, '')}\n`
+                    }
+                    txt += '╚═〘 *B O C C H I  B O T* 〙'
+                    await ruriko.sendTextWithMentions(from, txt)
+                } else {
+                    let txt = '╔══✪〘 *EVERYONE* 〙✪══\n'
+                    for (let i = 0; i < groupMem.length; i++) {
+                        txt += '╠➥'
+                        txt += ` @${groupMem[i].id.replace(/@c.us/g, '')}\n`
+                    }
+                    txt += '╚═〘 *B O C C H I  B O T* 〙'
+                    await ruriko.sendTextWithMentions(from, txt)
+                    daily.addLimit(sender.id, _daily)
+                }
+                break
+            case 'groupicon':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return await ruriko.reply(from, eng.adminOnly(), id)
+                if (!isBotGroupAdmins) return ruriko.reply(from, eng.botNotAdmin(), id)
+                if (isMedia && isImage || isQuotedImage) {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    await ruriko.reply(from, eng.wait(), id)
+                    const encryptMedia = isQuotedImage ? quotedMsg : message
+                    const _mimetype = isQuotedImage ? quotedMsg.mimetype : mimetype
+                    const mediaData = await decryptMedia(encryptMedia)
+                    const imageBase64 = `data:${_mimetype};base64,${mediaData.toString('base64')}`
+                    await ruriko.setGroupIcon(groupId, imageBase64)
+                    await ruriko.sendText(from, eng.ok())
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'antilink':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return await ruriko.reply(from, eng.adminOnly(), id)
+                if (!isBotGroupAdmins) return await ruriko.reply(from, eng.botNotAdmin(), id)
+                if (ar[0] === 'enable') {
+                    if (isDetectorOn) return await ruriko.reply(from, eng.detectorOnAlready(), id)
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    _antilink.push(groupId)
+                    fs.writeFileSync('./database/group/antilink.json', JSON.stringify(_antilink))
+                    await ruriko.reply(from, eng.detectorOn(name, formattedTitle), id)
+                } else if (ar[0] === 'disable') {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    _antilink.splice(groupId, 1)
+                    fs.writeFileSync('./database/group/antilink.json', JSON.stringify(_antilink))
+                    await ruriko.reply(from, eng.detectorOff(), id)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'leveling':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return await ruriko.reply(from, eng.adminOnly(), id)
+                if (ar[0] === 'enable') {
+                    if (isLevelingOn) return await ruriko.reply(from, eng.levelingOnAlready(), id)
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    _leveling.push(groupId)
+                    fs.writeFileSync('./database/group/leveling.json', JSON.stringify(_leveling))
+                    await ruriko.reply(from, eng.levelingOn(), id)
+                } else if (ar[0] === 'disable') {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    _leveling.splice(groupId, 1)
+                    fs.writeFileSync('./database/group/leveling.json', JSON.stringify(_leveling))
+                    await ruriko.reply(from, eng.levelingOff(), id)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'welcome':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return await ruriko.reply(from, eng.adminOnly(), id)
+                if (ar[0] === 'enable') {
+                    if (isWelcomeOn) return await ruriko.reply(from, eng.welcomeOnAlready(), id)
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    _welcome.push(groupId)
+                    fs.writeFileSync('./database/group/welcome.json', JSON.stringify(_welcome))
+                    await ruriko.reply(from, eng.welcomeOn(), id)
+                } else if (ar[0] === 'disable') {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    _welcome.splice(groupId, 1)
+                    fs.writeFileSync('./database/group/welcome.json', JSON.stringify(_welcome))
+                    await ruriko.reply(from, eng.welcomeOff(), id)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'autosticker':
+            case 'autostiker':
+            case 'autostik':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return await ruriko.reply(from, eng.adminOnly(), id)
+                if (ar[0] === 'enable') {
+                    if (isAutoStickerOn) return await ruriko.reply(from, eng.autoStikOnAlready(), id)
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    _autosticker.push(groupId)
+                    fs.writeFileSync('./database/group/autosticker.json', JSON.stringify(_autosticker))
+                    await ruriko.reply(from, eng.autoStikOn(), id)
+                } else if (ar[0] === 'disable') {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    _autosticker.splice(groupId, 1)
+                    fs.writeFileSync('./database/group/autosticker.json', JSON.stringify(_autosticker))
+                    await ruriko.reply(from, eng.autoStikOff(), id)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'antinsfw':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return await ruriko.reply(from, eng.adminOnly(), id)
+                if (!isBotGroupAdmins) return await ruriko.reply(from, eng.botNotAdmin(), id)
+                if (ar[0] === 'enable') {
+                    if (isDetectorOn) return await ruriko.reply(from, eng.antiNsfwOnAlready(), id)
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    _antinsfw.push(groupId)
+                    fs.writeFileSync('./database/group/antinsfw.json', JSON.stringify(_antinsfw))
+                    await ruriko.reply(from, eng.antiNsfwOn(name, formattedTitle), id)
+                } else if (ar[0] === 'disable') {
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    _antinsfw.splice(groupId, 1)
+                    fs.writeFileSync('./database/group/antinsfw.json', JSON.stringify(_antinsfw))
+                    await ruriko.reply(from, eng.antiNsfwOff(), id)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'badwords':
+            case 'badword':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return await ruriko.reply(from, eng.adminOnly(), id)
+                if (!isBotGroupAdmins) return await ruriko.reply(from, eng.botNotAdmin(), id)
+                if (ar[0] === 'enable') {
+                    if (isAntiBadWords) return await ruriko.reply(from, eng.antiBadWordsOnAlready(), id)
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    _badwords.push(groupId)
+                    fs.writeFileSync('./database/group/badwords.json', JSON.stringify(_badwords))
+                    await ruriko.reply(from, eng.antiBadWordsOn(name, formattedTitle), id)
+                } else if (ar[0] === 'disable') {
+                    console.log(ar.splice(1).toString())
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    _badwords.splice(groupId, 1)
+                    fs.writeFileSync('./database/group/badwords.json', JSON.stringify(_badwords))
+                    await ruriko.reply(from, eng.antiBadWordsOff(), id)
+                } else if (ar[0] === 'add') {
+                    const newBadwords = ar.splice(1)
+                    if (newBadwords.length === 0) return await ruriko.reply(from, eng.wrongFormat(), id)
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    badwords.addWords(...newBadwords)
+                    await ruriko.reply(from, eng.ok(), id)
+                } else if (ar[0] === 'remove') {
+                    const newBadwords = ar.splice(1)
+                    if (newBadwords.length === 0) return await ruriko.reply(from, eng.wrongFormat(), id)
+                    if (limit.isLimit(sender.id, _limit, limitCount, isPremium, isOwner)) return await ruriko.reply(from, eng.limit(), id)
+                    limit.addLimit(sender.id, _limit, isPremium, isOwner)
+                    badwords.removeWords(...newBadwords)
+                    await ruriko.reply(from, eng.ok(), id)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+
+            // Owner command
+            case 'xp':
+                if (!isOwner) return await ruriko.reply(from, eng.ownerOnly(), id)
+                if (mentionedJidList.length !== 0 && typeof Number(ar[1]) === 'number') {
+                    level.addLevelingXp(mentionedJidList[0], Number(ar[1]), _level)
+                    await ruriko.reply(from, eng.ok(), id)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'block':
+            case 'blok':
+                if (!isOwner) return await ruriko.reply(from, eng.ownerOnly(), id)
+                if (mentionedJidList.length !== 0) {
+                    for (let blok of mentionedJidList) {
+                        if (blok === botNumber) return await ruriko.reply(from, eng.wrongFormat(), id)
+                        await ruriko.contactBlock(blok)
+                    }
+                    await ruriko.reply(from, eng.ok(), id)
+                } else if (args.length === 1) {
+                    await ruriko.contactBlock(args[0] + '@c.us')
+                    await ruriko.reply(from, eng.ok(), id)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'unblock':
+            case 'unblok':
+                if (!isOwner) return await ruriko.reply(from, eng.ownerOnly(), id)
+                if (mentionedJidList.length !== 0) {
+                    for (let blok of mentionedJidList) {
+                        if (blok === botNumber) return await ruriko.reply(from, eng.wrongFormat(), id)
+                        await ruriko.contactUnblock(blok)
+                    }
+                    await ruriko.reply(from, eng.ok(), id)
+                } else if (args.length === 1) {
+                    await ruriko.contactUnblock(args[0] + '@c.us')
+                    await ruriko.reply(from, eng.ok(), id)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'bc':
+                if (!isOwner) return await ruriko.reply(from, eng.ownerOnly(), id)
+                if (!q) return await ruriko.reply(from, eng.emptyMess(), id)
+                const chats = await ruriko.getAllChatIds()
+                for (let bcs of chats) {
+                    let cvk = await ruriko.getChatById(bcs)
+                    if (!cvk.isReadOnly) await ruriko.sendText(bcs, `${q}\n\n- Bot Admin\n_Broadcasted message_`)
+                }
+                await ruriko.reply(from, eng.ok(), id)
+                break
+            case 'clearall':
+                if (!isOwner) return await ruriko.reply(from, eng.ownerOnly(), id)
+                const allChats = await ruriko.getAllChats()
+                for (let delChats of allChats) {
+                    await ruriko.deleteChat(delChats.id)
+                }
+                await ruriko.reply(from, eng.ok(), id)
+                break
+            case 'leaveall':
+                if (!isOwner) return await ruriko.reply(from, eng.ownerOnly(), id)
+                if (!q) return await ruriko.reply(from, eng.emptyMess(), id)
+                const allGroup = await ruriko.getAllGroups()
+                for (let gclist of allGroup) {
+                    await ruriko.sendText(gclist.contact.id, q)
+                    await ruriko.leaveGroup(gclist.contact.id)
+                }
+                await ruriko.reply(from, eng.ok())
+                break
+            case 'getses':
+                if (!isOwner) return await ruriko.reply(from, eng.ownerOnly(), id)
+                const ses = await ruriko.getSnapshot()
+                await ruriko.sendFile(from, ses, 'session.png', eng.ok())
+                break
+            case 'ban':
+                if (!isOwner) return await ruriko.reply(from, eng.ownerOnly(), id)
+                if (ar[0] === 'add') {
+                    if (mentionedJidList.length !== 0) {
+                        for (let benet of mentionedJidList) {
+                            if (benet === botNumber) return await ruriko.reply(from, eng.wrongFormat(), id)
+                            _ban.push(benet)
+                            fs.writeFileSync('./database/bot/banned.json', JSON.stringify(_ban))
+                        }
+                        await ruriko.reply(from, eng.ok(), id)
+                    } else {
+                        _ban.push(args[1] + '@c.us')
+                        fs.writeFileSync('./database/bot/banned.json', JSON.stringify(_ban))
+                        await ruriko.reply(from, eng.ok(), id)
+                    }
+                } else if (ar[0] === 'del') {
+                    if (mentionedJidList.length !== 0) {
+                        if (mentionedJidList[0] === botNumber) return await ruriko.reply(from, eng.wrongFormat(), id)
+                        _ban.splice(mentionedJidList[0], 1)
+                        fs.writeFileSync('./database/bot/banned.json', JSON.stringify(_ban))
+                        await ruriko.reply(from, eng.ok(), id)
+                    } else {
+                        _ban.splice(args[1] + '@c.us', 1)
+                        fs.writeFileSync('./database/bot/banned.json', JSON.stringify(_ban))
+                        await ruriko.reply(from, eng.ok(), id)
+                    }
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'eval':
+            case 'ev':
+                if (!isOwner) return await ruriko.reply(from, eng.ownerOnly(), id)
+                if (!q) return await ruriko.reply(from, eng.wrongFormat(), id)
+                try {
+                    let evaled = await eval(q)
+                    if (typeof evaled !== 'string') evaled = require('util').inspect(evaled)
+                    await ruriko.sendText(from, evaled)
+                } catch (err) {
+                    console.error(err)
+                    await ruriko.reply(from, err, id)
+                }
+                break
+            case 'shutdown':
+                if (!isOwner) return await ruriko.reply(from, eng.ownerOnly(), id)
+                await ruriko.sendText(from, 'Good bye~ 👋')
+                    .then(async () => await ruriko.kill())
+                    .catch(() => new Error('Target closed.'))
+                break
+            case 'premium':
+                if (!isOwner) return await ruriko.reply(from, eng.ownerOnly(), id)
+                if (ar[0] === 'add') {
+                    if (mentionedJidList.length !== 0) {
+                        for (let prem of mentionedJidList) {
+                            if (prem === botNumber) return await ruriko.reply(from, eng.wrongFormat(), id)
+                            premium.addPremiumUser(prem, args[2], _premium)
+                            await ruriko.reply(from, `*── 「 PREMIUM ADDED 」 ──*\n\n➸ *ID*: ${prem}\n➸ *Expired*: ${ms(toMs(args[2])).days} day(s) ${ms(toMs(args[2])).hours} hour(s) ${ms(toMs(args[2])).minutes} minute(s)`, id)
+                        }
+                    } else {
+                        premium.addPremiumUser(args[1] + '@c.us', args[2], _premium)
+                        await ruriko.reply(from, `*── 「 PREMIUM ADDED 」 ──*\n\n➸ *ID*: ${args[1]}@c.us\n➸ *Expired*: ${ms(toMs(args[2])).days} day(s) ${ms(toMs(args[2])).hours} hour(s) ${ms(toMs(args[2])).minutes} minute(s)`, id)
+                    }
+                } else if (ar[0] === 'del') {
+                    if (mentionedJidList.length !== 0) {
+                        if (mentionedJidList[0] === botNumber) return await ruriko.reply(from, eng.wrongFormat(), id)
+                        _premium.splice(premium.getPremiumPosition(mentionedJidList[0], _premium), 1)
+                        fs.writeFileSync('./database/bot/premium.json', JSON.stringify(_premium))
+                        await ruriko.reply(from, eng.ok(), id)
+                    } else {
+                        _premium.splice(premium.getPremiumPosition(args[1] + '@c.us', _premium), 1)
+                        fs.writeFileSync('./database/bot/premium.json', JSON.stringify(_premium))
+                        await ruriko.reply(from, eng.ok(), id)
+                    }
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'setstatus':
+            case 'setstats':
+            case 'setstat':
+                if (!isOwner) return await ruriko.reply(from, eng.ownerOnly(), id)
+                if (!q) return await ruriko.reply(from, eng.emptyMess(), id)
+                await ruriko.setMyStatus(q)
+                await ruriko.reply(from, eng.ok(), id)
+                break
+            case 'mute':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(pushname), id)
+                if (!isGroupMsg) return await ruriko.reply(from, eng.groupOnly(), id)
+                if (!isGroupAdmins) return await ruriko.reply(from, eng.adminOnly(), id)
+                if (ar[0] === 'enable') {
+                    if (isMute) return await ruriko.reply(from, eng.muteChatOnAlready(), id)
+                    _mute.push(groupId)
+                    fs.writeFileSync('./database/bot/mute.json', JSON.stringify(_mute))
+                    await ruriko.reply(from, eng.muteChatOn(), id)
+                } else if (ar[0] === 'disable') {
+                    _mute.splice(groupId, 1)
+                    fs.writeFileSync('./database/bot/mute.json', JSON.stringify(_mute))
+                    await ruriko.reply(from, eng.muteChatOff(), id)
+                } else {
+                    await ruriko.reply(from, eng.wrongFormat(), id)
+                }
+                break
+            case 'setname':
+                if (!isOwner) return await ruriko.reply(from, eng.ownerOnly(), id)
+                if (!q || q.length > 25) return await ruriko.reply(from, eng.wrongFormat(), id)
+                await ruriko.setMyName(q)
+                await ruriko.reply(from, eng.nameChanged(q), id)
+                break
+            case 'grouplist':
+                if (!isRegistered) return await ruriko.reply(from, eng.notRegistered(), id)
+                const getGroups = await ruriko.getAllGroups()
+                let txtGc = '*── 「 GROUP LIST 」 ──*\n'
+                for (let i = 0; i < getGroups.length; i++) {
+                    txtGc += `\n\n❏ *Name*: ${getGroups[i].name}\n❏ *Unread messages*: ${getGroups[i].unreadCount} messages`
+                }
+                await ruriko.sendText(from, txtGc)
+                break
+            case 'reset':
+                if (!isOwner) return await ruriko.reply(from, eng.ownerOnly(), id)
+                _limit = []
+                console.log('Hang tight, it\'s time to reset usage limits...')
+                fs.writeFileSync('./database/user/limit.json', JSON.stringify(_limit))
+                await ruriko.reply(from, eng.ok(), id)
+                console.log('Success!')
+                break
+            default:
+                if (isCmd) {
+                    await ruriko.reply(from, eng.cmdNotFound(command), id)
+                }
+                break
+        }
+    } catch (err) {
+        console.error(color('[ERROR]', 'red'), err)
+    }
+}
+/********** END OF MESSAGE HANDLER **********/

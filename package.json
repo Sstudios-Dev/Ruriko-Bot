@@ -1,5 +1,5 @@
 {
-    "name": "RurikoBot",
+    "name": "rurikobot",
     "version": "1.0.0",
     "description": "multifunctional WhatsApp bot with javaScript using several libraries",
     "main": "index.js",

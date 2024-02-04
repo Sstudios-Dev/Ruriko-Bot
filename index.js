@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 const { create, Client } = require('@open-wa/wa-automate')
 const { color, options } = require('./tools')
-const { eng, ind } = require('./message/text/lang/')
+const { eng, es } = require('./message/text/lang/')
 const { loader } = require('./function')
 const { version, bugs } = require('./package.json')
 const { ownerBot } = require('./config.json')
@@ -13,7 +13,7 @@ const cron = require('node-cron')
 const exec = require('await-exec')
 
 const start = (ruriko = new Client()) => {
-    console.log(color(figlet.textSync('BocchiBot', 'Larry 3D'), 'cyan'))
+    console.log(color(figlet.textSync('rurikoBot', 'Larry 3D'), 'cyan'))
     console.log(color('=> Bot successfully loaded! Database:', 'yellow'), color(loader.getAllDirFiles('./database').length), color('Library:', 'yellow'), color(loader.getAllDirFiles('./lib').length), color('Function:', 'yellow'), color(loader.getAllDirFiles('./function').length))
     console.log(color('=> Source code version:', 'yellow'), color(version))
     console.log(color('=> Bug? Error? Suggestion? Visit here:', 'yellow'), color(bugs.url))

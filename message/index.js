@@ -134,66 +134,57 @@ module.exports = msgHandler = async (ruriko = new Client(), message) => {
 
         // ROLE (Change to what you want, or add) and you can change the role sort based on XP.
         const levelRole = level.getLevelingLevel(sender.id, _level)
-        var role = 'Copper V'
+        var role = 'Newbie I'
         if (levelRole >= 5) {
-            role = 'Copper IV'
+            role = 'Newbie II'
         }
         if (levelRole >= 10) {
-            role = 'Copper III'
+            role = 'Newbie III'
         }
         if (levelRole >= 15) {
-            role = 'Copper II'
+            role = 'Semi-newbie I'
         }
         if (levelRole >= 20) {
-            role = 'Copper I'
+            role = 'Semi-newbie II'
         }
         if (levelRole >= 25) {
-            role = 'Silver V'
+            role = 'Semi-newbie III'
         }
         if (levelRole >= 30) {
-            role = 'Silver IV'
-        }
-        if (levelRole >= 35) {
-            role = 'Silver III'
+            role = 'Advanced I'
         }
         if (levelRole >= 40) {
-            role = 'Silver II'
-        }
-        if (levelRole >= 45) {
-            role = 'Silver I'
+            role = 'Advanced II'
         }
         if (levelRole >= 50) {
-            role = 'Gold V'
-        }
-        if (levelRole >= 55) {
-            role = 'Gold IV'
+            role = 'Advanced III'
         }
         if (levelRole >= 60) {
-            role = 'Gold III'
-        }
-        if (levelRole >= 65) {
-            role = 'Gold II'
+            role = 'Advanced IV'
         }
         if (levelRole >= 70) {
-            role = 'Gold I'
-        }
-        if (levelRole >= 75) {
-            role = 'Platinum V'
+            role = 'Expert I'
         }
         if (levelRole >= 80) {
-            role = 'Platinum IV'
-        }
-        if (levelRole >= 85) {
-            role = 'Platinum III'
+            role = 'Expert II'
         }
         if (levelRole >= 90) {
-            role = 'Platinum II'
-        }
-        if (levelRole >= 95) {
-            role = 'Platinum I'
+            role = 'Expert III'
         }
         if (levelRole >= 100) {
-            role = 'Exterminator'
+            role = 'Super-Expert I'
+        }
+        if (levelRole >= 110) {
+            role = 'Super-Expert II'
+        }
+        if (levelRole >= 120) {
+            role = 'Super-Expert III'
+        }
+        if (levelRole >= 140) {
+            role = 'Super-Expert IV'
+        }
+        if (levelRole >= 180) {
+            role = 'Super-Expert V'
         }
 
         // Leveling [BETA] by Slavyan
@@ -208,7 +199,7 @@ module.exports = msgHandler = async (ruriko = new Client(), message) => {
                     level.addLevelingLevel(sender.id, 1, _level)
                     const userLevel = level.getLevelingLevel(sender.id, _level)
                     const fetchXp = 5 * Math.pow(userLevel, 2) + 50 * userLevel + 100
-                    await ruriko.reply(from, `*── 「 LEVEL UP 」 ──*\n\n➸ *Name*: ${pushname}\n➸ *XP*: ${level.getLevelingXp(sender.id, _level)} / ${fetchXp}\n➸ *Level*: ${currentLevel} -> ${level.getLevelingLevel(sender.id, _level)} 🆙 \n➸ *Role*: *${role}*`, id)
+                    await ruriko.reply(from, `╭─── 「 LEVEL UP 」 ───╮\n\n➸ *Name*: ${pushname}\n➸ *XP*: ${level.getLevelingXp(sender.id, _level)} / ${fetchXp}\n➸ *Level*: ${currentLevel} -> ${level.getLevelingLevel(sender.id, _level)} 🆙 \n➸ *Role*: *${role}*`, id)
                 }
             } catch (err) {
                 console.error(err)
@@ -389,69 +380,60 @@ module.exports = msgHandler = async (ruriko = new Client(), message) => {
                 if (!isGroupMsg) return await ruriko.reply(from.eng.groupOnly(), id)
                 const resp = _level
                 _level.sort((a, b) => (a.xp < b.xp) ? 1 : -1)
-                let leaderboard = '*── 「 LEADERBOARDS 」 ──*\n\n'
+                let leaderboard = '╭─── 「 LEADERBOARDS 」 ───╮\n\n'
                 try {
                     for (let i = 0; i < 10; i++) {
-                        var roles = 'Copper V'
+                        var roles = 'Newbie I'
                         if (resp[i].level >= 5) {
-                            roles = 'Copper IV'
+                            roles = 'Newbie II'
                         }
                         if (resp[i].level >= 10) {
-                            roles = 'Copper III'
+                            roles = 'Newbie III'
                         }
                         if (resp[i].level >= 15) {
-                            roles = 'Copper II'
+                            roles = 'Semi-newbie I'
                         }
                         if (resp[i].level >= 20) {
-                            roles = 'Copper I'
+                            roles = 'Semi-newbie II'
                         }
                         if (resp[i].level >= 25) {
-                            roles = 'Silver V'
+                            roles = 'Semi-newbie III'
                         }
                         if (resp[i].level >= 30) {
-                            roles = 'Silver IV'
-                        }
-                        if (resp[i].level >= 35) {
-                            roles = 'Silver III'
+                            roles = 'Advanced I'
                         }
                         if (resp[i].level >= 40) {
-                            roles = 'Silver II'
-                        }
-                        if (resp[i].level >= 45) {
-                            roles = 'Silver I'
+                            roles = 'Advanced II'
                         }
                         if (resp[i].level >= 50) {
-                            roles = 'Gold V'
-                        }
-                        if (resp[i].level >= 55) {
-                            roles = 'Gold IV'
+                            roles = 'Advanced III'
                         }
                         if (resp[i].level >= 60) {
-                            roles = 'Gold III'
-                        }
-                        if (resp[i].level >= 65) {
-                            roles = 'Gold II'
+                            roles = 'Advanced IV'
                         }
                         if (resp[i].level >= 70) {
-                            roles = 'Gold I'
-                        }
-                        if (resp[i].level >= 75) {
-                            roles = 'Platinum V'
+                            roles = 'Expert I'
                         }
                         if (resp[i].level >= 80) {
-                            roles = 'Platinum IV'
-                        }
-                        if (resp[i].level >= 85) {
-                            roles = 'Platinum III'
+                            roles = 'Expert II'
                         }
                         if (resp[i].level >= 90) {
-                            roles = 'Platinum II'
-                        }
-                        if (resp[i].level >= 95) {
-                            roles = 'Platinum I'
+                            roles = 'Expert III'
                         }
                         if (resp[i].level > 100) {
-                            roles = 'Exterminator'
+                            roles = 'Super-Expert I'
+                        }
+                        if (resp[i].level > 110) {
+                            roles = 'Super-Expert II'
+                        }
+                        if (resp[i].level > 120) {
+                            roles = 'Super-Expert III'
+                        }
+                        if (resp[i].level > 140) {
+                            roles = 'Super-Expert IV'
+                        }
+                        if (resp[i].level > 180) {
+                            roles = 'Super-Expert V'
                         }
                         leaderboard += `${i + 1}. wa.me/${_level[i].id.replace('@c.us', '')}\n➸ *XP*: ${_level[i].xp} *Level*: ${_level[i].level}\n➸ *Role*: ${roles}\n\n`
                     }
@@ -1194,25 +1176,25 @@ module.exports = msgHandler = async (ruriko = new Client(), message) => {
                             await ruriko.reply(from, 'Error!', id);
                         });
                 } else {
-                    await ruriko.reply(from, 'NSFW is currently disabled or you have reached the limit. Use `nsfwon` to enable it.', id);
+                    await ruriko.reply(from, eng.nsfwDisabled(), id);
                 }
                 break;
                 
             case 'nsfwon':
                 if (isOwner && isGroupAdmins) {
                     nsfwEnabled = true;
-                    await ruriko.reply(from, 'NSFW has been enabled.', id);
+                    await ruriko.reply(from, eng.nsfwOn(), id);
                 } else {
-                    await ruriko.reply(from, 'Only the owner can enable NSFW.', id);
+                    await ruriko.reply(from, eng.nsfwError(), id);
                 }
                 break;
                 
             case 'nsfwoff':
                 if (isOwner && isGroupAdmins) {
                     nsfwEnabled = false;
-                    await ruriko.reply(from, 'NSFW has been disabled.', id);
+                    await ruriko.reply(from, eng.nsfwOff(), id);
                 } else {
-                    await ruriko.reply(from, 'Only the owner can disable NSFW.', id);
+                    await ruriko.reply(from, eng.nsfwError(), id);
                 }
                 break;
             // Fun

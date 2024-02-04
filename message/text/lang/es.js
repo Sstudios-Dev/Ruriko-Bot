@@ -692,344 +692,362 @@ exports.menuSticker = () => {
 
 exports.menuWeeaboo = () => {
     return `
-*── 「 WEEABOO 」 ──*
+╭─── 「 ANIME 」 ───╮
 
 1. *${prefix}neko*
-Send a neko girl photo.
-Aliases: -
-Usage: *${prefix}neko*
-
+- Envía una foto de una chica neko.
+- Aliases: -
+- Uso: *${prefix}neko*
+    
 2. *${prefix}wallpaper*
-Send anime wallpapers.
-Aliases: *wp*
-Usage: *${prefix}wallpaper*
-
+- Envía fondos de pantalla de anime.
+- Aliases: *wp*
+- Uso: *${prefix}wallpaper*
+    
 3. *${prefix}kemono*
-Send kemonomimi girl photos.
-Aliases: -
-Usage: *${prefix}kemono*
-
+- Envía fotos de chicas kemonomimi.
+- Aliases: -
+- Uso: *${prefix}kemono*
+    
 4. *${prefix}wait*
-Search anime source from the screenshots scene.
-Aliases: -
-Usage: Send screenshots with caption *${prefix}wait* or reply to the screenshots with a caption *${prefix}wait*
-
+- Busca la fuente de anime a partir de escenas de capturas de pantalla.
+- Aliases: -
+- Uso: Envía capturas de pantalla con la leyenda *${prefix}wait* o responde a las capturas de pantalla con la leyenda *${prefix}wait*
+    
 5. *${prefix}source*
-Look for sources from the doujin panel, illustrations, and images related to anime.
-Aliases: *sauce*
-Usage: Send images with caption *${prefix}source* or reply to the images with a caption *${prefix}source*
-
+- Busca fuentes de paneles doujin, ilustraciones e imágenes relacionadas con anime.
+- Aliases: *sauce*
+- Uso: Envía imágenes con la leyenda *${prefix}source* o responde a las imágenes con la leyenda *${prefix}source*
+    
 6. *${prefix}waifu*
-Send random waifu photos.
-Aliases: -
-Usage: *${prefix}waifu*
-
-_Index of [5]_
+- Envía fotos aleatorias de waifus.
+- Aliases: -
+- Uso: *${prefix}waifu*
+╰─ Index [5] ─╯     
     `
 }
 
 exports.menuFun = () => {
     return `
-*── 「 FUN 」 ──*
+╭─── 「 DIVERSIÓN 」 ───╮
 
 1. *${prefix}triggered*
-Apply a triggered effect to image.
-Aliases: -
-Usage: Send image with caption *${prefix}triggered* or reply to someone message with caption *${prefix}triggered* or you can directly use *${prefix}triggered*
-
+- Aplica un efecto de "triggered" a la imagen.
+- Aliases: -
+- Uso: Envía una imagen con la leyenda *${prefix}triggered*, responde al mensaje de alguien con la leyenda *${prefix}triggered* o puedes usar directamente *${prefix}triggered*
+    
 2. *${prefix}kiss*
-Kiss someone ( ͡° ͜ʖ ͡°).
-Aliases: -
-Usage: Send image with caption *${prefix}kiss* or reply image with caption *${prefix}kiss*
-
+- Besa a alguien ( ͡° ͜ʖ ͡°).
+- Aliases: -
+- Uso: Envía una imagen con la leyenda *${prefix}kiss* o responde a una imagen con la leyenda *${prefix}kiss*
+    
 3. *${prefix}profile*
-Check my profile.
-Aliases: *me*
-Usage: *${prefix}profile*
-
+- Verifica mi perfil.
+- Aliases: *me*
+- Uso: *${prefix}profile*
+    
 4. *${prefix}trash*
-Trash?
-Aliases: -
-Usage: *${prefix}trash*
-
-
-_Index of [6]_
+- ¿Basura?
+- Aliases: -
+- Uso: *${prefix}trash*
+    
+╰─ Índice [6] ─╯    
     `
 }
 
 exports.menuModeration = () => {
     return `
-*── 「 MODERATION 」 ──*
+╭─── 「 MODERACIÓN 」 ───╮
 
 1. *${prefix}add*
-Add users to group.
-Aliases: -
-Usage: *${prefix}add* 628xxxxxxxxxx
-
+- Añade usuarios al grupo.
+- Aliases: -
+- Uso: *${prefix}add* 628xxxxxxxxxx
+    
 2. *${prefix}kick*
-Remove members from the group.
-Aliases: -
-Usage: *${prefix}kick* @member1
-
+- Elimina miembros del grupo.
+- Aliases: -
+- Uso: *${prefix}kick* @miembro1
+    
 3. *${prefix}promote*
-Promote member to become admin.
-Aliases: -
-Usage: *${prefix}promote* @member1
-
+- Asciende a un miembro a administrador.
+- Aliases: -
+- Uso: *${prefix}promote* @miembro1
+    
 4. *${prefix}demote*
-Demote member from admin.
-Aliases: -
-Usage: *${prefix}demote* @member1
-
+- Degradar a un miembro de administrador.
+- Aliases: -
+- Uso: *${prefix}demote* @miembro1
+    
 5. *${prefix}leave*
-Leave bot from group.
-Aliases: -
-Usage: *${prefix}leave*
-
+- Hace que el bot abandone el grupo.
+- Aliases: -
+- Uso: *${prefix}leave*
+    
 6. *${prefix}everyone*
-Mention all group members.
-Aliases: -
-Usage: *${prefix}everyone*
-
+- Menciona a todos los miembros del grupo.
+- Aliases: -
+- Uso: *${prefix}everyone*
+    
 7. *${prefix}groupicon*
-Change group icon.
-Aliases: -
-Usage: Send images with caption *${prefix}groupicon* or reply to the images with a caption *${prefix}groupicon*
-
+- Cambia el icono del grupo.
+- Aliases: -
+- Uso: Envía imágenes con la leyenda *${prefix}groupicon* o responde a las imágenes con la leyenda *${prefix}groupicon*
+    
 8. *${prefix}antilink*
-Toogle anti-group link feature.
-Aliases: -
-Usage: *${prefix}antilink* enable/disable
-
+- Activa/desactiva la función de enlace anti-grupo.
+- Aliases: -
+- Uso: *${prefix}antilink* habilitar/deshabilitar
+    
 9. *${prefix}welcome*
-Toogle welcome feature.
-Aliases: -
-Usage: *${prefix}welcome* enable/disable
-
+- Activa/desactiva la función de bienvenida.
+- Aliases: -
+- Uso: *${prefix}welcome* habilitar/deshabilitar
+    
 10. *${prefix}autosticker*
-Toogle auto-sticker feature. Every sended image will made into a sticker.
-Aliases: *autostiker autostik*
-Usage: *${prefix}autostiker* enable/disable
-
+- Activa/desactiva la función de auto-sticker. Cada imagen enviada se convertirá en un sticker.
+- Aliases: *autostiker autostik*
+- Uso: *${prefix}autostiker* habilitar/deshabilitar
+    
 11. *${prefix}antinsfw*
-Toogle anti-NSFW link.
-Aliases: -
-Usage: *${prefix}antinsfw* enable/disable
-
+- Activa/desactiva el enlace anti-NSFW.
+- Aliases: -
+- Uso: *${prefix}antinsfw* habilitar/deshabilitar
+    
 12. *${prefix}mutegc*
-Set group to admin only who can send a message.
-Aliases: -
-Usage: *${prefix}mutegc* enable/disable
-
+- Establece el grupo para que solo los administradores puedan enviar mensajes.
+- Aliases: -
+- Uso: *${prefix}mutegc* habilitar/deshabilitar
+    
 13. *${prefix}grouplink*
-Send a invite link of current group.
-Aliases: -
-Usage: *${prefix}grouplink*
-
+- Envía un enlace de invitación del grupo actual.
+- Aliases: -
+- Uso: *${prefix}grouplink*
+    
 14. *${prefix}revoke*
-Revoke invite link of current group.
-Aliases: -
-Usage: *${prefix}revoke*
-
+- Revoca el enlace de invitación del grupo actual.
+- Aliases: -
+- Uso: *${prefix}revoke*
+    
 15. *${prefix}leveling*
-Toogle leveling feature.
-Aliases: -
-Usage: *${prefix}leveling* enable/disable
-
+- Activa/desactiva la función de nivelación.
+- Aliases: -
+- Uso: *${prefix}leveling* habilitar/deshabilitar
+    
 16. *${prefix}badwords*
-Setting up anti-bad words feature.
-Aliases: *badword*
-Usage: *${prefix}badwords* enable/disable or add/remove to add/remove a blacklist words.
-
-_Index of [7]_
+- Configura la función anti-palabras ofensivas.
+- Aliases: *badword*
+- Uso: *${prefix}badwords* habilitar/deshabilitar o agregar/eliminar para agregar/eliminar palabras a la lista negra.
+    
+╰─ Índice [7] ─╯    
     `
 }
 
 exports.menuOwner = () => {
     return `
-*── 「 OWNER 」 ──*
+╭─── 「 OWNER 」 ───╮
 
 1. *${prefix}bc*
-Create a broadcast.
-Aliases: -
-Usage: *${prefix}bc* text
-
+- Crea una difusión.
+- Aliases: -
+- Uso: *${prefix}bc* texto
+    
 2. *${prefix}clearall*
-Deletes all chats on the bot account.
-Aliases: -
-Usage: *${prefix}clearall*
-
+- Elimina todos los chats en la cuenta del bot.
+- Aliases: -
+- Uso: *${prefix}clearall*
+    
 3. *${prefix}getses*
-Take a screenshot of the session from the bot account.
-Aliases: -
-Usage: *${prefix}getses*
-
+- Toma una captura de pantalla de la sesión de la cuenta del bot.
+- Aliases: -
+- Uso: *${prefix}getses*
+    
 4. *${prefix}ban*
-Add/remove banned users.
-Aliases: -
-Usage: *${prefix}ban* add/del @user/62812xxxxxxxx
-
+- Añade/elimina usuarios bloqueados.
+- Aliases: -
+- Uso: *${prefix}ban* add/del @user/62812xxxxxxxx
+    
 5. *${prefix}leaveall*
-Leave from all groups.
-Aliases: -
-Usage: *${prefix}leaveall*
-
+- Salir de todos los grupos.
+- Aliases: -
+- Uso: *${prefix}leaveall*
+    
 6. *${prefix}eval*
-Evaluate the JavaScript code.
-Aliases: *ev*
-Usage: *${prefix}eval*
-
+- Evalúa el código JavaScript.
+- Aliases: *ev*
+- Uso: *${prefix}eval*
+    
 7. *${prefix}shutdown*
-Shutdown bot.
-Aliases: -
-Usage: *${prefix}shutdown*
-
+- Apaga el bot.
+- Aliases: -
+- Uso: *${prefix}shutdown*
+    
 8. *${prefix}premium*
-Add/remove premium user.
-*s* - seconds
-*m* - minutes
-*h* - hours
-*d* - days
-Aliases: -
-Usage: *${prefix}premium* add/del @user/62812xxxxxxxx 30d
-
+- Añade/elimina usuarios premium.
+- *s* - segundos
+- *m* - minutos
+- *h* - horas
+- *d* - días
+- Aliases: -
+- Uso: *${prefix}premium* add/del @user/62812xxxxxxxx 30d
+    
 9. *${prefix}setstatus*
-Set about me.
-Aliases: *setstatus setstat*
-Usage: *${prefix}status* text
-
+- Establece mi descripción.
+- Aliases: *setstatus setstat*
+- Uso: *${prefix}status* texto
+    
 10. *${prefix}serial*
-Check user's serial.
-Aliases: -
-Usage: *${prefix}serial* user_serial
-
+- Verifica el serial del usuario.
+- Aliases: -
+- Uso: *${prefix}serial* serial_usuario
+    
 11. *${prefix}exif*
-Adjust your sticker WM.
-Aliases: -
-Usage: *${prefix}exif* pack_name | author_name
-
+- Ajusta la información de tu sticker.
+- Aliases: -
+- Uso: *${prefix}exif* nombre_paquete | nombre_autor
+    
 12. *${prefix}mute*
-Mute all users.
-Aliases: -
-Usage: Use *${prefix}mute* to mute and use *${prefix}mute* once again to unmute.
-
+- Silencia a todos los usuarios.
+- Aliases: -
+- Uso: Usa *${prefix}mute* para silenciar y usa *${prefix}mute* nuevamente para quitar el silencio.
+    
 13. *${prefix}setname*
-Change bot's name. Maximum 25 characters.
-Aliases: -
-Usage: *${prefix}name* new_username
-
+- Cambia el nombre del bot. Máximo 25 caracteres.
+- Aliases: -
+- Uso: *${prefix}name* nuevo_nombre
+    
 14. *${prefix}block*
-Block user.
-Aliases: *blok*
-Usage: *${prefix}block* @user/62812xxxxxxxx
-
+- Bloquea a un usuario.
+- Aliases: *blok*
+- Uso: *${prefix}block* @user/62812xxxxxxxx
+    
 15. *${prefix}unblock*
-Unblock user.
-Aliases: *unblok*
-Usage: *${prefix}unblock* @user/62812xxxxxxxx
-
+- Desbloquea a un usuario.
+- Aliases: *unblok*
+- Uso: *${prefix}unblock* @user/62812xxxxxxxx
+    
 16. *${prefix}xp*
-Add XP to someone.
-Aliases: -
-Usage: *${prefix}xp* @user amount_xp
-
-_Index of [8]_
+- Añade XP a alguien.
+- Aliases: -
+- Uso: *${prefix}xp* @user cantidad_xp
+    
+╰─ Índice [8] ─╯    
     `
 }
 
 exports.menuLeveling = () => {
     return `
-*── 「 LEVELING 」 ──*
+╭─── 「 NIVELES 」 ───╮
 
 1. *${prefix}level*
-Check your level.
-Aliases: -
-Usage: *${prefix}level*
-
+- Verifica tu nivel.
+- Aliases: -
+- Uso: *${prefix}level*
+    
 2. *${prefix}leaderboard*
-Check leaderboard.
-Aliaases: -
-Usage: *${prefix}leaderboard*
-
-_Index of [9]_
+- Verifica el ranking.
+- Aliases: -
+- Uso: *${prefix}leaderboard*
+    
+╰─ Índice [9] ─╯    
     `
 }
 
 exports.menuAi = () => {
     return `
-*── 「 AI 」 ──*
+╭─── 「 AI 」 ───╮
 
 1. *${prefix}ai*
-ChatGPT 3.5 implementation.
-Aliases: -
-Usage: *${prefix}ai* your_question
-
+- Implementación de ChatGPT 3.5.
+- Aliases: -
+- Uso: *${prefix}ai* tu_pregunta
+    
 2. *${prefix}image*
-Create image from given prompt.
-Aliases: *img*
-Usage: *${prefix}image* prompt
-
-_Index of [10]_
+- Crea una imagen a partir del indicador proporcionado.
+- Aliases: *img*
+- Uso: *${prefix}image* indicador
+    
+╰─ Índice [10] ─╯    
     `
 }
 
 exports.menuNsfw = () => {
     return `
-*── 「 NSFW 」 ──*
+╭─── 「 NSFW 」 ───╮
     
 1. *${prefix}nsfw*
-Send random waifu nsfw photos
-Aliases: -
-Usage: *${prefix}nsfw*
-
+- Envía fotos NSFW aleatorias de waifus.
+- Aliases: -
+- Uso: *${prefix}nsfw*
+    
 2. *${prefix}nsfwon*
-enables the nsfw command in the group
-Aliases: -
-Usage: *${prefix}nsfwon*
-
+- Habilita el comando NSFW en el grupo.
+- Aliases: -
+- Uso: *${prefix}nsfwon*
+    
 3. *${prefix}nsfwoff*
-disable the nsfw command in the group
-Aliases: -
-Usage: *${prefix}nsfwoff*
-
-_Index of [11]_
+- Deshabilita el comando NSFW en el grupo.
+- Aliases: -
+- Uso: *${prefix}nsfwoff*
+    
+╰─ Índice [11] ─╯
     `
 }
 
 exports.rules = () => {
     return `
-*── 「 RULES 」 ──*
+╭─── 「 REGLAS 」 ───╮
 
-1. Do NOT spam bot.
-Penalty: *WARN/SOFT BLOCK*
-
-2. Do NOT call bot.
-Penalty: *SOFT BLOCK*
-
-3. Do NOT exploit bots.
-Penalty: *PERMANENT BLOCK*
-
-If you've understand these rules, please type *${prefix}menu* to get started.
+1. NO hagas spam al bot.
+- Penalización: *AVISO/BLOQUEO SUAVE*
+    
+2. NO llames al bot.
+- Penalización: *BLOQUEO SUAVE*
+    
+3. NO explotes los bots.
+- Penalización: *BLOQUEO PERMANENTE*
+    
+4. NO compartas contenido explícito o NSFW.
+- Penalización: *AVISO/BLOQUEO*
+    
+5. NO compartas contenido ofensivo o perjudicial.
+- Penalización: *AVISO/BLOQUEO*
+    
+6. Respeta a otros usuarios y sé cortés.
+- Penalización: *AVISO/BLOQUEO*
+    
+7. NO inundes el grupo con mensajes innecesarios.
+- Penalización: *AVISO/BLOQUEO SUAVE*
+    
+8. Evita el uso excesivo de MAYÚSCULAS o símbolos.
+- Penalización: *AVISO/BLOQUEO SUAVE*
+    
+9. NO te hagas pasar por otros usuarios o el bot.
+- Penalización: *BLOQUEO*
+    
+10. Sigue las reglas y directrices específicas del grupo.
+- Penalización: *Varía según las reglas del grupo*
+    
+    Si entiendes y aceptas estas reglas, por favor, escribe *${prefix}menu* para comenzar.       
     `
 }
 
 // Note for owner/hoster, please DO NOT edit this section.
 exports.tos = (ownerNumber) => {
     return `
-*── 「 TERMS OF SERVICE 」 ──*
+╭─── 「 TÉRMINOS DE SERVICIO 」 ───╮
 
-This bot is an open-source bot, come with the name of BocchiBot which is available on GitHub for free.
-The owner/hoster of this bot is independent from the responsibility and supervision of the developer (Slavyan).
-Owner/hoster may plagiarize, add, delete, replace source code with notes *DO NOT SELL* this source code in any form.
-If an error occurs, the first person you should contact is the owner/hoster.  
-
-If you want to contributing to this project, visit:
-https://github.com/SlavyanDesu/BocchiBot
-
-Contact person:
-wa.me/${ownerNumber.replace('@c.us', '')} (Owner/hoster)
-
-Regards,
-Slavyan
+Este bot, RurikoBot, es un proyecto de código abierto disponible de forma gratuita en GitHub.
+El propietario/anfitrión de este bot opera de forma independiente y no está bajo la responsabilidad o supervisión directa del desarrollador (Slavyan).
+El propietario/anfitrión tiene la autorización para modificar, añadir, eliminar o reemplazar el código fuente, con la condición de *NO VENDER* este código fuente en ninguna forma.
+En caso de problemas o errores, la persona a contactar en primer lugar debería ser el propietario/anfitrión.
+    
+Si deseas contribuir a este proyecto, por favor, visita:
+https://github.com/Sstudios-Dev/Ruriko-Bot
+    
+Persona de contacto:
+wa.me/${ownerNumber.replace('@c.us', '')} (Propietario/anfitrión)
+    
+Código de versión SstudiosDev creado por *SlavyanDesu*    
     `
 }

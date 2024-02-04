@@ -1,4 +1,4 @@
-/* eslint-disable quotes */
+/* message archive in English */
 const { prefix } = require('../../../config.json')
 
 exports.unreg = () => {
@@ -51,9 +51,11 @@ exports.addedGroup = (chat) => {
 
 exports.listBlock = (blockNumber) => {
     return `
-*── 「 HALL OF SHAME 」 ──*
+╭─━━━  「 HALL OF SHAME 」 ━━━─╮
 
-Total blocked: *${blockNumber.length}* user(s)\n
+     Total Blocked: *${blockNumber.length}* user(s)\n
+
+╰─━━━━━━━━━━━━━━━━━━━━━─╯
     `
 }
 
@@ -81,20 +83,38 @@ exports.notRegistered = () => {
     return `You haven't registered in our database!\n\nPlease register in *private chat* by typing:\n*${prefix}register* name`
 }
 
+exports.nsfwDisabled = () => {
+    return `NSFW is currently disabled or you have reached the limit. Use *nsfwon* to enable it.`
+}
+
+exports.nsfwOff = () => {
+    return `NSFW has been disabled.`
+}
+
+exports.nsfwOn = () => {
+    return `NSFW has been enabled.`
+}
+
+exports.nsfwError = () => {
+    return `Only the owner or administrator can enable NSFW.`
+}
+
 exports.registered = (name, userId, time, serial) => {
     return `
-*── 「 REGISTRATION 」 ──*
+╭─━━━  「 REGISTRATION 」 ━━━─╮
 
 Your account has been created with data below:
-➸ *Name*: ${name}
-➸ *ID*: ${userId}
-➸ *Registered on*: ${time}
-➸ *Serial*: ${serial}
-
+➸ **Name**: ${name}
+➸ **ID**: ${userId}
+➸ **Registered on**: ${time}
+➸ **Serial**: ${serial}
+    
 Note:
-Don't share your *serial* to anyone!
-
-Type *${prefix}rules* to see the rules.
+Don't share your **serial** to anyone!
+    
+Type **${prefix}rules** to see the rules.
+    
+╰─━━━━━━━━━━━━━━━━━━━━━─╯
     `
 }
 
@@ -112,41 +132,45 @@ exports.daily = (time) => {
 
 exports.profile = (username, status, premi, benet, adm, level, requiredXp, xp) => {
     return `
-*── 「 USER INFO」 ──*
+╭─━━━  「 USER INFO」 ──╮
 
-➸ *Username*: ${username}
-➸ *Status*: ${status}
-➸ *Premium*: ${premi}
-➸ *Banned*: ${benet}
-➸ *Admin*: ${adm}
-
+➸ **Username**: ${username}
+➸ **Status**: ${status}
+➸ **Premium**: ${premi}
+➸ **Banned**: ${benet}
+➸ **Admin**: ${adm}
+    
 =_=_=_=_=_=_=_=_=_=_=_=_=
-
-*── 「 PROGRESS 」 ──*
-
-➸ *Level*: ${level}
-➸ *XP*: ${xp} / ${requiredXp}
+    
+╭─━━━  「 PROGRESS 」 ──╮
+    
+➸ **Level**: ${level}
+➸ **XP**: ${xp} / ${requiredXp}
     `
 }
 
 exports.detectorOn = (name, formattedTitle) => {
     return `
-*── 「 ANTI GROUP LINK 」 ──*
+╭─━━━  「 ANTI GROUP LINK 」 ──╮
 
 Announcement for all *${(name || formattedTitle)}* members.
-This group has a group link detector, if someone sends a group link then he'll be kicked out immediately.
-
+    This group has a group link detector; if someone sends a group link, they will be kicked out immediately.
+    
 Thanks for your attention.
 - Admin *${(name || formattedTitle)}*
+    
+╰─━━━━━━━━━━━━━━━━━─╯
     `
 }
 
 exports.linkDetected = () => {
     return `
-*── 「 ANTI GROUP LINK 」 ──*
+╭─━━━  「 ANTI GROUP LINK 」 ──╮
 
 You sent a group chat link!
 Sorry, but you have to leave...
+    
+╰─━━━━━━━━━━━━━━━─╯
     `
 }
 
@@ -160,13 +184,15 @@ exports.detectorOnAlready = () => {
 
 exports.antiNsfwOn = (name, formattedTitle) => {
     return `
-*── 「 ANTI NSFW LINK 」 ──*
+╭─━━━  「 ANTI NSFW LINK 」 ──╮
 
 Announcement for all *${(name || formattedTitle)}* members.
-This group has a NSFW link detector, if someone sends a NSFW link then he'll be kicked out immediately.
-
+This group has a NSFW link detector; if someone sends a NSFW link, they will be kicked out immediately.
+    
 Thanks for your attention.
 - Admin *${(name || formattedTitle)}*
+    
+╰─━━━━━━━━━━━━━━━─╯
     `
 }
 
@@ -180,13 +206,15 @@ exports.antiNsfwOnAlready = () => {
 
 exports.antiBadWordsOn = (name, formattedTitle) => {
     return `
-*── 「 ANTI BAD WORDS 」 ──*
+╭─━━━  「 ANTI BAD WORDS 」 ──╮
 
 Announcement for all *${(name || formattedTitle)}* members.
-This group has a bad words detector, if someone sends a bad words/profane words then the related message will be deleted.
-
+This group has a bad words detector; if someone sends bad words/profane words, the related message will be deleted.
+    
 Thanks for your attention.
 - Admin *${(name || formattedTitle)}*
+    
+╰─━━━━━━━━━━━━━━━─╯
     `
 }
 
@@ -256,11 +284,13 @@ exports.autoStikOnAlready = () => {
 
 exports.afkOn = (pushname, reason) => {
     return `
-*── 「 AFK MODE 」 ──*
+╭─━━━  「 AFK MODE 」 ──╮
 
 AFK feature has been successfully *enabled*!
 ➸ *Username*: ${pushname}
 ➸ *Reason*: ${reason}
+    
+╰─━━━━━━━━━━━━━━━─╯
     `
 }
 
@@ -270,11 +300,13 @@ exports.afkOnAlready = () => {
 
 exports.afkMentioned = (getReason, getTime) => {
     return `
-*── 「 AFK MODE 」 ──*
+╭─━━━  「 AFK MODE 」 ──╮
 
 Ssshhh! This person is currently AFK!
 ➸ *Reason*: ${getReason}
 ➸ *Since*: ${getTime}
+    
+╰─━━━━━━━━━━━━━━━─╯
     `
 }
 
@@ -284,17 +316,21 @@ exports.afkDone = (pushname) => {
 
 exports.gcMute = () => {
     return `
-*── 「 MUTED 」 ──*
+╭─━━━  「 MUTED 」 ──╮
 
-Only admins who can send message in this group.
+Only admins can send messages in this group.
+    
+╰─━━━━━━━━━━━━━─╯   
     `
 }
 
 exports.gcUnmute = () => {
     return `
-*── 「 UNMUTED 」 ──*
+╭─━━━  「 UNMUTED 」 ──╮
 
-All members can send message in this group now.
+All members can send messages in this group now.
+    
+╰─━━━━━━━━━━━━━━━─╯ 
     `
 }
 
@@ -304,13 +340,15 @@ exports.notNum = (q) => {
 
 exports.registeredFound = (name, time, serial, userId) => {
     return `
-*── 「 REGISTERED 」 ──*
+╭─━━━  「 REGISTERED 」 ──╮
 
 Account has been found!
 ➸ *Name*: ${name}
 ➸ *ID*: ${userId}
 ➸ *Registered time*: ${time}
 ➸ *Serial*: ${serial}
+    
+╰─━━━━━━━━━━━━━━━━─╯
     `
 }
 
@@ -324,10 +362,12 @@ exports.pcOnly = () => {
 
 exports.linkNsfw = () => {
     return `
-*── 「 ANTI NSFW LINK 」 ──*
+╭─━━━  「 ANTI NSFW LINK 」 ──╮
 
 You've sent a group link!
 Sorry, but you have to leave...
+    
+╰─━━━━━━━━━━━━━━━━━─╯    
     `
 }
 
@@ -349,30 +389,36 @@ exports.muteChatOnAlready = () => {
 
 exports.limit = () => {
     return `
-*── 「 LIMIT 」 ──*
+╭─━━━  「 LIMIT 」 ──╮
 
 You ran out of usage limit! Please do the following:
 ❏ *_Wait until 12:00 AM (UTC+7)_*
+    
+╰─━━━━━━━━━━━━━─╯    
     `
 }
 
 exports.reminderOn = (messRemind, parsedTime, sender) => {
     return `
-*── 「 REMINDER 」 ──*
+╭─━━━  「 REMINDER 」 ──╮
 
 Reminder has been set!
 ➸ *Message*: ${messRemind}
 ➸ *Duration*: ${parsedTime.hours} hour(s) ${parsedTime.minutes} minute(s) ${parsedTime.seconds} second(s)
 ➸ *For*: @${sender.id.replace('@c.us', '')}
+    
+╰─━━━━━━━━━━━━━━━─╯    
     `
 }
 
 exports.reminderAlert = (messRemind, sender) => {
     return `
-*── 「 REMINDER 」 ──*
+╭─━━━  「 REMINDER 」 ──╮
 
 ⏰ @${sender.id.replace('@c.us', '')} ⏰
-➸ *Message*: ${messRemind}`
+➸ *Message*: ${messRemind}
+    
+╰─━━━━━━━━━━━━━━━─╯`
 }
 
 exports.nameChanged = (q) => {
@@ -381,7 +427,7 @@ exports.nameChanged = (q) => {
 
 exports.menu = (jumlahUser, level, xp, role, pushname, requiredXp, premium) => {
     return `
-*── 「 WELCOME 」 ──*
+╭─━━━  「 WELCOME 」 ──╮
 
 ======================
 ➸ *Name*: ${pushname}
@@ -390,260 +436,257 @@ exports.menu = (jumlahUser, level, xp, role, pushname, requiredXp, premium) => {
 ➸ *Role*: ${role}
 ➸ *Premium*: ${premium}
 ======================
-
+    
 Total registered: *${jumlahUser}*
-
+    
 *[1]* Downloader
 *[2]* Bot
 *[3]* Misc
 *[4]* Sticker
-*[5]* Weeaboo
+*[5]* Anime
 *[6]* Fun
 *[7]* Moderation
 *[8]* Owner
 *[9]* Leveling
 *[10]* AI
 *[11]* Nsfw
-
+    
 Type *${prefix}menu* index_number to open the selected page menu.
-
+    
 Note:
 The bot has a cooldown for *5 seconds* every time you use it.
+    
+╰─━━━━━━━━━━━━━━━─╯  
     `
 }
 
 exports.menuDownloader = () => {
     return `
-*── 「 DOWNLOADER 」 ──*
+╭─── 「 DOWNLOADER 」 ───╮
 
-1. *${prefix}twitter*
-Download Twitter media.
-Aliases: *twt*
-Usage: *${prefix}twitter* link
-
-2. *${prefix}youtube*
-Download YouTube video.
-Aliases: *yt*
-Usage: *${prefix}youtube* link
-
-_Index of [1]_
+1. **${prefix}twitter**
+- Download Twitter media.
+- Aliases: *twt*
+- Usage: *${prefix}twitter* link
+    
+2. **${prefix}youtube**
+- Download YouTube video.
+- Aliases: *yt*
+- Usage: *${prefix}youtube* link
+    
+╰─ *Index of [1]* ─╯ 
     `
 }
 
 exports.menuBot = () => {
     return `
-*── 「 BOT 」 ──*
+╭─── 「 BOT 」 ───╮
 
 1. *${prefix}rules*
-Must read.
-Aliases: *rule*
-Usage: *${prefix}rules*
+- Must read.
+- Aliases: *rule*
+- Usage: *${prefix}rules*
 
 2. *${prefix}menu*
-Display available commands.
-Aliases: -
-Usage: *${prefix}menu* index_number
+- Display available commands.
+- Aliases: -
+- Usage: *${prefix}menu* index_number
 
 3. *${prefix}status*
-Display bot status.
-Aliases: *stats*
-Usage: *${prefix}status*
+- Display bot status.
+- Aliases: *stats*
+- Usage: *${prefix}status*
 
 4. *${prefix}listblock*
-Check blocked numbers.
-Aliases: -
-Usage: *${prefix}listblock*
+- Check blocked numbers.
+- Aliases: -
+- Usage: *${prefix}listblock*
 
 5. *${prefix}ping*
-Check bot speed.
-Aliases: *p*
-Usage: *${prefix}ping*
+- Check bot speed.
+- Aliases: *p*
+- Usage: *${prefix}ping*
 
 6. *${prefix}delete*
-Delete messages from bot.
-Aliases: *del*
-Usage: Reply to deleted messages with a caption *${prefix}delete*
+- Delete messages from bot.
+- Aliases: *del*
+- Usage: Reply to deleted messages with a caption *${prefix}delete*
 
 7. *${prefix}report*
-Report bugs to owner.
-Aliases: -
-Usage: *${prefix}report* text
+- Report bugs to owner.
+- Aliases: -
+- Usage: *${prefix}report* text
 
 8. *${prefix}tos*
-Terms of service.
-Aliases: -
-Usage: *${prefix}tos*
+- Terms of service.
+- Aliases: -
+- Usage: *${prefix}tos*
 
 9. *${prefix}join*
-Join a group via link.
-Aliases: -
-Usage: *${prefix}join* group_link
+- Join a group via link.
+- Aliases: -
+- Usage: *${prefix}join* group_link
 
 10. *${prefix}ownerbot*
-Send owner contact.
-Aliases: -
-Usage: *${prefix}ownerbot*
+- Send owner contact.
+- Aliases: -
+- Usage: *${prefix}ownerbot*
 
 11. *${prefix}getpic*
-Send user's profile pic.
-Aliases: -
-Usage: *${prefix}getpic* @user/62812xxxxxxxx
+- Send user's profile pic.
+- Aliases: -
+- Usage: *${prefix}getpic* @user/62812xxxxxxxx
 
 12. *${prefix}premiumcheck*
-Check your remaining premium time limit.
-Aliases: *cekpremium*
-Usage: *${prefix}premiumcheck*
+- Check your remaining premium time limit.
+- Aliases: *cekpremium*
+- Usage: *${prefix}premiumcheck*
 
 13. *${prefix}premiumlist*
-Premium user list.
-Aliases: *listpremium*
-Usage: *${prefix}premiumlist*
+- Premium user list.
+- Aliases: *listpremium*
+- Usage: *${prefix}premiumlist*
 
 14. *${prefix}limit*
-Check your remaining limit.
-Aliases: -
-Usage: *${prefix}limit*
+- Check your remaining limit.
+- Aliases: -
+- Usage: *${prefix}limit*
 
 15. *${prefix}serial*
-Check your bio using serial.
-Aliases: -
-Usage: *${prefix}serial* serial
+- Check your bio using serial.
+- Aliases: -
+- Usage: *${prefix}serial* serial
 
 16. *${prefix}runtime*
-Check your host runtime.
-Aliases: -
-Usage: *${prefix}runtime*
+- Check your host runtime.
+- Aliases: -
+- Usage: *${prefix}runtime*
 
 17. *${prefix}unregister*
-Unregister your account.
-Aliases: *unreg*
-Usage: *${prefix}unregister*
+- Unregister your account.
+- Aliases: *unreg*
+- Usage: *${prefix}unregister*
 
-_Index of [2]_
+╰─ *Index of [1]* ─╯ 
     `
 }
 
 exports.menuMisc = () => {
     return `
-*── 「 MISC 」 ──*
+╭─── 「 MISC 」 ───╮
 
 1. *${prefix}say*
-The bot will repeat your message.
-Aliases: -
-Usage: *${prefix}say* text
-
+- The bot will repeat your message.
+- Aliases: -
+- Usage: *${prefix}say* text
+    
 2. *${prefix}tts*
-Create a text to speech audio. You can find language code here https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
-Aliases: -
-Usage: *${prefix}tts* language_code | text
-
+- Create a text-to-speech audio.
+- Aliases: -
+- Usage: *${prefix}tts* language_code | text
+(Language codes can be found here: [ISO 639-1 codes](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes))
+    
 3. *${prefix}afk*
-Set your account to AFK mode.
-Aliases: -
-Usage: *${prefix}afk* reason. Send any message to group to disable.
-
+- Set your account to AFK mode.
+- Aliases: -
+- Usage: *${prefix}afk* reason. Send any message to the group to disable.
+    
 4. *${prefix}math*
-A calculator.
-* = multiplication
-+ = addition
-- = subtraction
-/ = division
-Aliases: -
-Usage: *${prefix}math* 12*12
-
+- A calculator.
+- * = multiplication, + = addition, - = subtraction, / = division
+- Aliases: -
+- Usage: *${prefix}math* 12*12
+    
 5. *${prefix}reminder*
-Reminder.
-*s* - seconds
-*m* - minutes
-*h* - hours
-*d* - days
-Aliases: -
-Usage: *${prefix}reminder* 10s | reminder_message
-
+- Set a reminder.
+- *s* - seconds, *m* - minutes, *h* - hours, *d* - days
+- Aliases: -
+- Usage: *${prefix}reminder* 10s | reminder_message
+    
 6. *${prefix}imagetourl*
-Image uploader.
-Aliases: *imgtourl*
-Usage: Send images with caption *${prefix}imagetourl* or reply to the image with a caption *${prefix}imagetourl*
-
+- Image uploader.
+- Aliases: *imgtourl*
+- Usage: Send images with caption *${prefix}imagetourl* or reply to the image with a caption *${prefix}imagetourl*
+    
 7. *${prefix}genshininfo*
-Genshin Impact characters info.
-Aliases: *genshin*
-Usage: *${prefix}genshininfo* chara_name
-
+- Genshin Impact characters info.
+- Aliases: *genshin*
+- Usage: *${prefix}genshininfo* chara_name
+    
 8. *${prefix}translate*
-Translate a text.
-Aliases: *tl*
-Usage: *${prefix}translate* text | code_lang
-
+- Translate a text.
+- Aliases: *tl*
+- Usage: *${prefix}translate* text | code_lang
+    
 9. *${prefix}tomp3*
-Convert a video to audio only (MP3).
-Aliases: -
-Usage: Send a video with caption *${prefix}tomp3* or reply video with a caption *${prefix}tomp3*
-
+- Convert a video to audio only (MP3).
+- Aliases: -
+- Usage: Send a video with caption *${prefix}tomp3* or reply to the video with a caption *${prefix}tomp3*
+    
 10. *${prefix}bass*
-Bass boost.
-Aliases: -
-Usage: Reply audio/voice with caption *${prefix}bass* dB_level.
-
+- Bass boost.
+- Aliases: -
+- Usage: Reply to audio/voice with caption *${prefix}bass* dB_level.
+    
 11. *${prefix}nightcore*
-Create a nightcore effect.
-Aliases: -
-Usage: Reply audio/voice with caption *${prefix}nightcore*
-
+- Create a nightcore effect.
+- Aliases: -
+- Usage: Reply to audio/voice with caption *${prefix}nightcore*
+    
 12. *${prefix}google*
-Search through Google.
-Aliases: *googlesearch*
-Usage: *${prefix}google* query
-
+- Search through Google.
+- Aliases: *googlesearch*
+- Usage: *${prefix}google* query
+    
 13. *${prefix}toptt*
-Create PTT audio.
-Aliases: *ptt*
-Usage: Reply audio/voice with caption *${prefix}toptt*
-
-_Index of [3]_
+- Create PTT audio.
+- Aliases: *ptt*
+- Usage: Reply to audio/voice with caption *${prefix}toptt*
+    
+╰─ Index [3] ─╯    
     `
 }
 
 exports.menuSticker = () => {
     return `
-*── 「 STICKER 」 ──*
+╭─── 「 STIKER 」 ───╮
 
 1. *${prefix}sticker*
-Create stickers from images sent or replied.
-Aliases: *stiker*
-Usage: Send images with caption *${prefix}sticker* or reply to the images with a caption *${prefix}sticker*
-
+- Create stickers from images sent or replied.
+- Aliases: *stiker*
+- Usage: Send images with caption *${prefix}sticker* or reply to the images with a caption *${prefix}sticker*
+    
 2. *${prefix}stickergif*
-Create stickers from videos/GIFs.
-Aliases: *stikergif* *sgif*
-Usage: Send videos/GIFs with caption *${prefix}stickergif* or reply to the videos/GIFs with a caption *${prefix}stickergif*
-
+- Create stickers from videos/GIFs.
+- Aliases: *stikergif* *sgif*
+- Usage: Send videos/GIFs with caption *${prefix}stickergif* or reply to the videos/GIFs with a caption *${prefix}stickergif*
+    
 3. *${prefix}stickertoimg*
-Convert sticker to image.
-Aliases: *stikertoimg* *toimg*
-Usage: Reply to the stickers with a caption *${prefix}stickertoimg*
-
+- Convert sticker to image.
+- Aliases: *stikertoimg* *toimg*
+- Usage: Reply to the stickers with a caption *${prefix}stickertoimg*
+    
 4. *${prefix}stickerwm*
-Create a sticker with metadata/WM.
-Aliases: *stcwm*
-Usage: Send images with caption *${prefix}stickerwm* pack_name | author_name or reply to the image with a caption *${prefix}stickerwm* pack_name | author_name
-
+- Create a sticker with metadata/WM.
+- Aliases: *stcwm*
+- Usage: Send images with caption *${prefix}stickerwm* pack_name | author_name or reply to the image with a caption *${prefix}stickerwm* pack_name | author_name
+    
 5. *${prefix}stickermeme*
-Create a sticker meme.
-Aliases: *stcmeme*
-Usage: Send images with caption *${prefix}sticker* upper_text | bottom_text or reply to the images with a caption *${prefix}sticker* upper_text | bottom_text
-
+- Create a sticker meme.
+- Aliases: *stcmeme*
+- Usage: Send images with caption *${prefix}sticker* upper_text | bottom_text or reply to the images with a caption *${prefix}sticker* upper_text | bottom_text
+    
 6. *${prefix}takestick*
-Edit sticker metadata.
-Aliases: *take*
-Usage: Reply to the stickers with a caption *${prefix}takestick* pack_name | author_name
-
+- Edit sticker metadata.
+- Aliases: *take*
+- Usage: Reply to the stickers with a caption *${prefix}takestick* pack_name | author_name
+    
 7. *${prefix}stickernobg*
-Create stickers from images sent or replied with blank background.
-Aliases: *take*
-Usage: Send images with caption *${prefix}stickernobg* or reply to the images with a caption *${prefix}stickernobg*
-
-_Index of [4]_
+- Create stickers from images sent or replied with a blank background.
+- Aliases: *take*
+- Usage: Send images with caption *${prefix}stickernobg* or reply to the images with a caption *${prefix}stickernobg*
+    
+╰─ Index [4] ─╯    
     `
 }
 
@@ -709,10 +752,6 @@ Trash?
 Aliases: -
 Usage: *${prefix}trash*
 
-5. *${prefix}hitler*
-Worse than hitler.
-Aliases: -
-Usage: *${prefix}hitler*
 
 _Index of [6]_
     `

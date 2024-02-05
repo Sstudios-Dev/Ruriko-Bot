@@ -99,6 +99,10 @@ exports.nsfwError = () => {
     return `Only the owner or administrator can enable NSFW.`
 }
 
+exports.nsfwGroup = () => {
+    return `NSFW commands can only be used in groups`
+}
+
 exports.registered = (name, userId, time, serial) => {
     return `
 ╭─━━━  「 REGISTRATION 」 ━━━─╮
@@ -1040,7 +1044,6 @@ exports.tos = (ownerNumber) => {
 
 This bot, named RurikoBot, is an open-source project available on GitHub for free.
 The owner/hoster of this bot operates independently and is not under the direct responsibility or supervision of the developer (Slavyan).
-The owner/hoster is authorized to modify, add, delete, or replace source code, with the condition of *NOT SELLING* this source code in any form.
 In case of any issues or errors, the primary contact should be the owner/hoster.
     
 If you wish to contribute to this project, please visit:

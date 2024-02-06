@@ -34,7 +34,7 @@ const { msgFilter, color, processTime, isUrl, createSerial } = require('../tools
 const { weeaboo, downloader } = require('../lib')
 const { uploadImages } = require('../tools/fetcher')
 // eslint-disable-next-line no-unused-vars
-const { eng, ind } = require('./text/lang/')
+const { eng, es } = require('./text/lang/')
 const { daily, level, register, afk, reminder, premium, limit, quizizz } = require('../function')
 const cd = 4.32e+7
 const limitCount = 25

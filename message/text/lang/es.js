@@ -14,7 +14,7 @@ exports.ok = () => {
 }
 
 exports.videoLimit = () => {
-    return `El tamaño del vídeo/GIF es demasiado grande.`
+    return `El tamaño del vídeo/GIF es demasiado pesado/grande.`
 }
 
 exports.wrongFormat = () => {
@@ -361,7 +361,7 @@ exports.registeredNotFound = (serial) => {
 }
 
 exports.pcOnly = () => {
-    return `Este comando sólo puede utilizarse en el chat privado.`
+    return `Este comando sólo se puede utilizarse en el chat privado.`
 }
 
 exports.linkNsfw = () => {

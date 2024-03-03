@@ -41,7 +41,7 @@
         "node-gtts": "^2.0.2",
         "node-tesseract-ocr": "^2.2.1",
         "openai": "^4.26.0",
-        "parse-ms": "2.1.0",
+        "parse-ms": "4.0.0",
         "sagiri": "^3.4.0",
         "video-url-link": "^0.1.5",
         "ytdl-core": "^4.11.5"

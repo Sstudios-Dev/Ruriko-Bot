@@ -42,7 +42,7 @@
         "node-tesseract-ocr": "^2.2.1",
         "openai": "^4.31.0",
         "parse-ms": "4.0.0",
-        "sagiri": "^3.4.0",
+        "sagiri": "^3.6.0",
         "video-url-link": "^0.1.5",
         "ytdl-core": "^4.11.5"
     },

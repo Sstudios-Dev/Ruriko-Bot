@@ -458,7 +458,8 @@ Total registrado: *${jumlahUser}*
 Escribe *${prefix}menu* número_de_índice para abrir el menú seleccionado.
     
 Nota:
-El bot tiene un tiempo de espera de *5 segundos* cada vez que lo usas.
+El bot tiene un tiempo de espera de *5 segundos* cada vez que lo usas
+para evitar la saturacion del mismo bot.
     
 ╰─━━━━━━━━━━━━━━━─╯    
     `

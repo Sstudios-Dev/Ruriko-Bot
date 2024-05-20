@@ -18,7 +18,7 @@
     "homepage": "https://sstudiosdev.github.io/",
     "license": "MIT",
     "dependencies": {
-        "@open-wa/wa-automate": "^4.71.10",
+        "@open-wa/wa-automate": "^4.71.11",
         "@vitalets/google-translate-api": "^9.2.0",
         "await-exec": "^0.1.2",
         "bad-words": "^3.0.4",
